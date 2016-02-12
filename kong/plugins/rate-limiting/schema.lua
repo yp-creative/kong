@@ -34,7 +34,7 @@ return {
     end
 
     if not has_value then
-      return false, DaoError("You need to set at least one limit: second, minute, hour, day, month, year", constants.DATABASE_ERROR_TYPES.SCHEMA)
+      return false, DaoError("You need to set at least one limit: "..table.concat(ordered_periods, ", "), constants.DATABASE_ERROR_TYPES.SCHEMA)
     elseif invalid_value then
       return false, DaoError(invalid_value, constants.DATABASE_ERROR_TYPES.SCHEMA)
     elseif invalid_order then
