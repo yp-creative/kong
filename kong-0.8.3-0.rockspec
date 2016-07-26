@@ -264,7 +264,10 @@ build = {
 
     ["kong.plugins.statsd.handler"] = "kong/plugins/statsd/handler.lua",
     ["kong.plugins.statsd.schema"] = "kong/plugins/statsd/schema.lua",
-    ["kong.plugins.statsd.statsd_logger"] = "kong/plugins/statsd/statsd_logger.lua"
+    ["kong.plugins.statsd.statsd_logger"] = "kong/plugins/statsd/statsd_logger.lua",
+
+    ["kong.plugins.hiren.handler"] = "kong/plugins/hiren/handler.lua",
+    ["kong.plugins.hiren.schema"] = "kong/plugins/hiren/schema.lua"
   },
   install = {
     conf = { "kong.yml" },
