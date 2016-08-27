@@ -132,7 +132,7 @@ function Kong.init()
   assert(dao:run_migrations()) -- migrating in case embedded in custom nginx
 
   -- populate singletons
-  singletons.dns = dns(config)
+  singletons.dns = dns.setup_client(config)
   singletons.loaded_plugins = assert(load_plugins(config, dao, events))
   singletons.serf = Serf.new(config, dao)
   singletons.dao = dao

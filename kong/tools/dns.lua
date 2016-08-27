@@ -37,4 +37,23 @@ local setup_client = function(conf)
   return dns_client
 end
 
-return setup_client
+--- implements co-socket connect method with dns resolution by Kong internals.
+-- If the name resolves to SRV records, the port returned by the DNS server will override
+-- the one provided.
+-- @param sock the socket to connect
+-- @param host hostname to connect to
+-- @param port port to connect to
+-- @param opts the options table
+-- @return success, or nil + error
+local connect = function(sock, host, port, opts)
+  local target_ip, target_port = dns_client.toip(host, port)
+  if not target_ip then return nil, target_port end
+print("******************************"..host..":"..port.."==>"..target_ip..":"..target_port)  
+  return sock:connect(target_ip, target_port, opts)
+end
+
+return {
+  setup_client = setup_client,
+  connect = connect,
+}
+
