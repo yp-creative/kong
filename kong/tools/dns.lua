@@ -48,7 +48,6 @@ end
 local connect = function(sock, host, port, opts)
   local target_ip, target_port = dns_client.toip(host, port)
   if not target_ip then return nil, target_port end
-print("******************************"..host..":"..port.."==>"..target_ip..":"..target_port)  
   return sock:connect(target_ip, target_port, opts)
 end
 
