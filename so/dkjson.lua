@@ -220,7 +220,7 @@ local function addpair (key, value, prev, indent, level, buffer, buflen, tables,
     buflen = addnewline2 (level, buffer, buflen)
   end
   buffer[buflen+1] = quotestring (key)
-  buffer[buflen+2] = ":"
+  buffer[buflen+2] = " : "
   return encode2 (value, indent, level, buffer, buflen + 2, tables, globalorder, state)
 end
 
@@ -525,7 +525,7 @@ local function scantable (what, closechar, str, startpos, nullval, objectmeta, a
     pos = scanwhite (str, pos)
     if not pos then return unterminated (str, what, startpos) end
     char = strsub (str, pos, pos)
-    if char == ":" then
+    if char == " : " then
       if val1 == nil then
         return nil, pos, "cannot use nil as table index (at " .. loc (str, pos) .. ")"
       end
@@ -683,7 +683,7 @@ function json.use_lpeg ()
   local Value = Space * (Array + Object + SimpleValue)
   local ExpectedValue = Value + Space * Err "value expected"
   ArrayContent = Value * Space * (P"," * g.Cc'cont' + g.Cc'last') * g.Cp()
-  local Pair = g.Cg (Space * String * Space * (P":" + Err "colon expected") * ExpectedValue)
+  local Pair = g.Cg (Space * String * Space * (P" : " + Err "colon expected") * ExpectedValue)
   ObjectContent = Pair * Space * (P"," * g.Cc'cont' + g.Cc'last') * g.Cp()
   local DecodeValue = ExpectedValue * g.Cp ()
 

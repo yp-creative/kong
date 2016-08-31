@@ -4,7 +4,6 @@ local ipairs = ipairs
 local ngx = ngx
 local table = table
 local json = require "so.dkjson"
-local string = string
 
 local initializeCtx = require 'kong.plugins.yop.interceptor.initialize_ctx'
 local httpMethod = require 'kong.plugins.yop.interceptor.http_method'
@@ -68,7 +67,6 @@ local function handleResponse(body)
   resp.validSign = r.validSign
   resp.result = r.result
   ngx.arg[1] = json.encode (resp, { indent = true })   -- "ts":1472608159000
-  ngx.arg[1] = string.gsub(ngx.arg[1],":"," : ")       -- "ts" : 472608159000 客户端只能处理这种
   ngx.log(ngx.ERR,"ngx.arg[1]:"..ngx.arg[1])
 end
 
