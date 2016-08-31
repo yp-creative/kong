@@ -1,0 +1,52 @@
+1.安装pcre openssl等
+sudo yum install -y pcre openssl readline-devel pcre-devel openssl-devel gcc libuuid libuuid-devel mcrypt
+
+2.下载openresty
+wget http://openresty.org/download/ngx_openresty-1.9.15.1.tar.gz
+tar xzvf ngx_openresty-1.9.15.1.tar.gz
+
+3.下载dyups
+git clone git://github.com/yzprofile/ngx_http_dyups_module.git
+
+4.下载luarocks
+wget http://keplerproject.github.io/luarocks/releases/luarocks-2.3.0.tar.gz
+tar xzvf luarocks-2.3.0.tar.gz
+
+5.下载serf并解压至/usr/local/bin/
+wget https://releases.hashicorp.com/serf/0.7.0/serf_0.7.0_linux_amd64.zip
+sudo unzip serf_0.7.0_linux_amd64.zip -d /usr/local/bin/
+
+6.安装openresty
+cd openresty-1.9.15.1
+./configure \
+  --with-pcre-jit \
+  --with-ipv6 \
+  --with-http_realip_module \
+  --with-http_ssl_module \
+  --with-http_stub_status_module \
+  --add-module=../ngx_http_dyups_module\
+
+make
+sudo make install
+export PATH="$PATH:/usr/local/openresty/bin"
+
+7.安装luarocks
+cd ~/luarocks-2.3.0
+./configure \
+  --lua-suffix=jit \
+  --with-lua=/usr/local/openresty/luajit \
+  --with-lua-include=/usr/local/openresty/luajit/include/luajit-2.1
+
+sudo make build
+sudo make install
+
+8.
+curl https://raw.githubusercontent.com/kensou97/kong/master/kong-custom-plugins-0.8.3-0.rockspec > ~/kong-custom-plugins-0.8.3-0.rockspec
+curl https://raw.githubusercontent.com/kensou97/kong/master/kong-0.8.3-0.rockspec > ~/kong-0.8.3-0.rockspec
+
+sudo /usr/local/bin/luarocks ~/kong-0.8.3-0.rockspec
+sudo /usr/local/bin/luarocks ~/kong-custom-plugins-0.8.3-0.rockspec
+
+
+
+
