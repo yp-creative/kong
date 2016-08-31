@@ -126,7 +126,7 @@ function Response.notAllowdIpException(appKey, ip)
   responses.send(200, Response:new():fail():errors("99001021", appKey, ip))
 end
 
-function Response.permessionDeniedException(appKey)
+function Response.permissionDeniedException(appKey)
   ngx.ctx.skipBodyFilter = true
   responses.send(200, Response:new():fail():errors("99001004", appKey))
 end

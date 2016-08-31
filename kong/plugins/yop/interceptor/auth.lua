@@ -17,7 +17,7 @@ _M.process = function(ctx)
   if apiLevel == 0 then return end
 
   local auth = ctx.auth
-  if not auth[tostring(ctx.api.id)] then response.permessionDeniedException(ctx.appKey) end
+  if not auth[tostring(ctx.api.id)] then response.permissionDeniedException(ctx.appKey) end
 end
 
 return _M
