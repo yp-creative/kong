@@ -1,6 +1,5 @@
 local logger = require "kong.cli.utils.logger"
 local IO = require "kong.tools.io"
-local dao_loader = require "kong.tools.dao_loader"
 
 local _M = {}
 
@@ -12,35 +11,9 @@ _M.STATUSES = {
 
 -- Services ordered by priority
 local services = {
-  require "kong.cli.services.dnsmasq",
-  require "kong.cli.services.serf",
+--  require "kong.cli.services.serf",
   require "kong.cli.services.nginx"
 }
-
-local function prepare_database(configuration)
-  setmetatable(configuration.dao_config, require "kong.tools.printable")
-  logger:info(string.format([[database...........%s %s]], configuration.database, tostring(configuration.dao_config)))
-
-  local factory = dao_loader.load(configuration)
-
-  local function on_migrate(identifier)
-    logger:info(string.format(
-      "Migrating %s (%s)",
-      logger.colors.yellow(identifier),
-      factory.db_type
-    ))
-  end
-
-  local function on_success(identifier, migration_name)
-    logger:info(string.format(
-      "%s migrated up to: %s",
-      identifier,
-      logger.colors.yellow(migration_name)
-    ))
-  end
-
-  return factory:run_migrations(on_migrate, on_success)
-end
 
 local function prepare_working_dir(configuration)
   local working_dir = configuration.nginx_working_dir
@@ -115,12 +88,6 @@ end
 function _M.start_all(configuration, configuration_path)
   -- Prepare and check working directory
   local _, err = prepare_working_dir(configuration)
-  if err then
-    return false, err
-  end
-
-  -- Prepare database if not initialized yet
-  local _, err = prepare_database(configuration)
   if err then
     return false, err
   end

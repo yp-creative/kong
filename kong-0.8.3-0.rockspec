@@ -92,7 +92,6 @@ build = {
     ["kong.tools.database_cache"] = "kong/tools/database_cache.lua",
     ["kong.tools.config_defaults"] = "kong/tools/config_defaults.lua",
     ["kong.tools.config_loader"] = "kong/tools/config_loader.lua",
-    ["kong.tools.dao_loader"] = "kong/tools/dao_loader.lua",
 
     ["kong.core.handler"] = "kong/core/handler.lua",
     ["kong.core.certificate"] = "kong/core/certificate.lua",
@@ -114,7 +113,6 @@ build = {
     ["kong.dao.cassandra_db"] = "kong/dao/cassandra_db.lua",
     ["kong.dao.postgres_db"] = "kong/dao/postgres_db.lua",
     ["kong.dao.dao"] = "kong/dao/dao.lua",
-    ["kong.dao.factory"] = "kong/dao/factory.lua",
     ["kong.dao.model_factory"] = "kong/dao/model_factory.lua",
     ["kong.dao.migrations.cassandra"] = "kong/dao/migrations/cassandra.lua",
     ["kong.dao.migrations.postgres"] = "kong/dao/migrations/postgres.lua",

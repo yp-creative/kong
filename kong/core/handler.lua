@@ -8,9 +8,7 @@
 -- In the `access_by_lua` phase, it is responsible for retrieving the API being proxied by
 -- a Consumer. Then it is responsible for loading the plugins to execute on this request.
 local utils = require "kong.tools.utils"
-local reports = require "kong.core.reports"
 local cluster = require "kong.core.cluster"
-local resolver = require "kong.core.resolver"
 local constants = require "kong.constants"
 local certificate = require "kong.core.certificate"
 
@@ -25,8 +23,7 @@ end
 return {
   init_worker = {
     before = function()
-      reports.init_worker()
-      cluster.init_worker()
+--      cluster.init_worker()
     end
   },
   certificate = {
@@ -37,7 +34,7 @@ return {
   access = {
     before = function()
       ngx.ctx.KONG_ACCESS_START = get_now()
-      ngx.ctx.api, ngx.ctx.upstream_url, ngx.var.upstream_host = resolver.execute(ngx.var.request_uri, ngx.req.get_headers())
+--      ngx.ctx.api, ngx.ctx.upstream_url, ngx.var.upstream_host = resolver.execute(ngx.var.request_uri, ngx.req.get_headers())
     end,
     -- Only executed if the `resolver` module found an API and allows nginx to proxy it.
     after = function()
@@ -90,7 +87,6 @@ return {
   },
   log = {
     after = function()
-      reports.log()
     end
   }
 }

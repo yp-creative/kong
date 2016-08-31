@@ -1,6 +1,5 @@
 local cluster_utils = require "kong.tools.cluster"
 local BaseService = require "kong.cli.services.base_service"
-local dao_loader = require "kong.tools.dao_loader"
 local stringy = require "stringy"
 local logger = require "kong.cli.utils.logger"
 local cjson = require "cjson"
@@ -20,7 +19,6 @@ function Serf:new(configuration)
                         ..(stringy.endswith(nginx_working_dir, "/") and "" or "/")
   self._script_path = path_prefix.."serf_event.sh"
   self._log_path = path_prefix.."serf.log"
-  self._dao_factory = dao_loader.load(self._configuration)
   Serf.super.new(self, SERVICE_NAME, nginx_working_dir)
 end
 
@@ -163,14 +161,6 @@ function Serf:_add_node()
      return false, "Can't find current member address"
   end
 
-  local _, err = self._dao_factory.nodes:insert({
-    name = name,
-    cluster_listening_address = stringy.strip(addr)
-  }, {ttl = self._configuration.cluster.ttl_on_failure})
-  if err then
-    return false, err
-  end
-
   return true
 end
 
@@ -272,12 +262,6 @@ function Serf:stop()
   if err then
     return false, err
   else
-    -- Remove the node from the datastore.
-    -- This is useful when this is the only node running in the cluster.
-    self._dao_factory.nodes:delete({
-      name = cluster_utils.get_node_identifier(self._configuration)
-    })
-
     -- Finally stop Serf
     Serf.super.stop(self, true)
   end

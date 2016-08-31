@@ -4,7 +4,6 @@ local ipairs = ipairs
 local ngx = ngx
 local table = table
 local cjson = require 'cjson'
-
 local initializeCtx = require 'kong.plugins.yop.interceptor.initialize_ctx'
 local httpMethod = require 'kong.plugins.yop.interceptor.http_method'
 local whitelist = require 'kong.plugins.yop.interceptor.whitelist'
@@ -23,16 +22,12 @@ local interceptors = {
   initializeCtx, httpMethod, whitelist, auth, decrypt, validate_sign,
   defaultValue, requestValidator, requestTransformer, prepare_upstream
 }
-
 local YopHandler = BasePlugin:extend()
 
 function YopHandler:new()
-  YopHandler.super.new(self, "yop")
 end
 
 function YopHandler:access()
-
-  YopHandler.super.access(self)
   local ctx = {}
   for _, interceptor in ipairs(interceptors) do
     interceptor.process(ctx)
@@ -70,8 +65,6 @@ local function handleResponse(body)
 end
 
 function YopHandler:body_filter()
-  YopHandler.super.body_filter(self)
-
   -- ngx.arg[2] false 意味着,body没有接收完.
   if (not ngx.arg[2]) then
     ngx.ctx.body = table.concat({ ngx.ctx.body, ngx.arg[1] })

@@ -203,14 +203,6 @@ local function find_api(uri, headers)
     return err
   end
 
-  -- Find by Host header
-  api, matched_host, hosts_list = _M.find_api_by_request_host(headers, apis_dics)
-  -- If it was found by Host, return
-  if api then
-    ngx.req.set_header(constants.HEADERS.FORWARDED_HOST, matched_host)
-    return nil, api, matched_host, hosts_list
-  end
-
   -- Otherwise, we look for it by request_path. We have to loop over all APIs and compare the requested URI.
   api, strip_request_path_pattern = _M.find_api_by_request_path(uri, apis_dics.request_path_arr)
 

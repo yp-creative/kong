@@ -12,8 +12,9 @@ local stringy = require "stringy"
 local pairs = pairs
 local next = next
 local tostring = tostring
+local ngx = ngx
 
-local url = os.getenv("YOP_HESSIAN")
+local url
 
 local CACHE_KEYS = {
   API = "api:",
@@ -27,6 +28,10 @@ local CACHE_KEYS = {
 }
 
 local _M = {}
+
+function _M.init()
+  url = os.getenv("YOP_HESSIAN")
+end
 
 function _M.rawset(key, value)
   return cache:set(key, value)
@@ -91,7 +96,7 @@ end
 local function remoteGetApp(appKey)
   ngx.log(ngx.INFO, "remote get app info...appKey:" .. appKey)
   local j = httpClient.post(url .. "/app", { appKey = appKey }, { ['accept'] = "application/json" })
-  ngx.log(ngx.INFO,j)
+  ngx.log(ngx.INFO, j)
   local o = json.decode(j)
   if isEmptyTable(o) then return nil end
   return o

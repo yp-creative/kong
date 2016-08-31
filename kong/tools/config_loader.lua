@@ -48,12 +48,12 @@ end
 local checks = {
   type = function(value, key_infos, value_type)
     if value_type ~= key_infos.type then
-      return "must be a "..key_infos.type
+      return "must be a " .. key_infos.type
     end
   end,
   minimum = function(value, key_infos, value_type)
     if value_type == "number" and key_infos.min ~= nil and value < key_infos.min then
-      return "must be greater than "..key_infos.min
+      return "must be greater than " .. key_infos.min
     end
   end,
   enum = function(value, key_infos, value_type)
@@ -83,7 +83,7 @@ local function validate_config_schema(config, config_schema)
       local ok, s_errors = validate_config_schema(property, key_infos.content)
       if not ok then
         for s_k, s_v in pairs(s_errors) do
-          errors = utils.add_error(errors, config_key.."."..s_k, s_v)
+          errors = utils.add_error(errors, config_key .. "." .. s_k, s_v)
         end
       end
     end
@@ -117,24 +117,24 @@ function _M.validate(config)
 
   -- Check listen addresses
   if config.proxy_listen and not is_valid_address(config.proxy_listen) then
-    return false, {proxy_listen = config.proxy_listen.." is not a valid \"host:port\" value"}
+    return false, { proxy_listen = config.proxy_listen .. " is not a valid \"host:port\" value" }
   end
   if config.proxy_listen_ssl and not is_valid_address(config.proxy_listen_ssl) then
-    return false, {proxy_listen_ssl = config.proxy_listen_ssl.." is not a valid \"host:port\" value"}
+    return false, { proxy_listen_ssl = config.proxy_listen_ssl .. " is not a valid \"host:port\" value" }
   end
   if config.admin_api_listen and not is_valid_address(config.admin_api_listen) then
-    return false, {admin_api_listen = config.admin_api_listen.." is not a valid \"host:port\" value"}
+    return false, { admin_api_listen = config.admin_api_listen .. " is not a valid \"host:port\" value" }
   end
   -- Cluster listen addresses must have an IPv4 host (no hostnames)
   if config.cluster_listen and not is_valid_address(config.cluster_listen, true) then
-    return false, {cluster_listen = config.cluster_listen.." is not a valid \"ip:port\" value"}
+    return false, { cluster_listen = config.cluster_listen .. " is not a valid \"ip:port\" value" }
   end
   if config.cluster_listen_rpc and not is_valid_address(config.cluster_listen_rpc, true) then
-    return false, {cluster_listen_rpc = config.cluster_listen_rpc.." is not a valid \"ip:port\" value"}
+    return false, { cluster_listen_rpc = config.cluster_listen_rpc .. " is not a valid \"ip:port\" value" }
   end
   -- Same for the cluster.advertise value
   if config.cluster and config.cluster.advertise and stringy.strip(config.cluster.advertise) ~= "" and not is_valid_address(config.cluster.advertise, true) then
-    return false, {["cluster.advertise"] = config.cluster.advertise.." is not a valid \"ip:port\" value"}
+    return false, { ["cluster.advertise"] = config.cluster.advertise .. " is not a valid \"ip:port\" value" }
   end
 
   return true
@@ -153,13 +153,13 @@ end
 function _M.load(config_path)
   local config_contents = IO.read_file(config_path)
   if not config_contents then
-    logger:error("No configuration file at: "..config_path)
+    logger:error("No configuration file at: " .. config_path)
     os.exit(1)
   end
 
-  local status,config = pcall(yaml.load,config_contents)
+  local status, config = pcall(yaml.load, config_contents)
   if not status then
-    logger:error("Could not parse configuration at: "..config_path)
+    logger:error("Could not parse configuration at: " .. config_path)
     os.exit(1)
   end
 
@@ -177,31 +177,19 @@ function _M.load(config_path)
 
   -- Adding computed properties
   config.pid_file = IO.path:join(config.nginx_working_dir, constants.CLI.NGINX_PID)
-  config.dao_config = config[config.database]
-  if config.dns_resolver == "dnsmasq" then
-    config.dns_resolver = {
-      address = "127.0.0.1:"..config.dns_resolvers_available.dnsmasq.port,
-      port = config.dns_resolvers_available.dnsmasq.port,
-      dnsmasq = true
-    }
-  else
-    config.dns_resolver = {address = config.dns_resolvers_available.server.address}
-  end
 
   -- Load absolute path for the nginx working directory
   if not stringy.startswith(config.nginx_working_dir, "/") then
     -- It's a relative path, convert it to absolute
     local fs = require "luarocks.fs"
-    config.nginx_working_dir = fs.current_dir().."/"..config.nginx_working_dir
+    config.nginx_working_dir = fs.current_dir() .. "/" .. config.nginx_working_dir
   end
-
-  config.plugins = utils.concat(constants.PLUGINS_AVAILABLE, config.custom_plugins)
 
   return config, config_path
 end
 
 function _M.load_default(config_path)
-  logger:info("Using configuration: "..config_path)
+  logger:info("Using configuration: " .. config_path)
 
   return _M.load(config_path)
 end
