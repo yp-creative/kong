@@ -6,7 +6,6 @@
 
 # kong
 nginx_tmp/
-kong*.yml
 
 # luacov
 luacov.*
