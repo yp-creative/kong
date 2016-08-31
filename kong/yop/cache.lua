@@ -6,6 +6,7 @@
 -- To change this template use File | Settings | File Templates.
 --
 local json = require "cjson"
+local singletons = require "kong.singletons"
 local cache = ngx.shared.yop
 local httpClient = require "kong.yop.http_client"
 local stringy = require "stringy"
@@ -14,7 +15,7 @@ local next = next
 local tostring = tostring
 local ngx = ngx
 
-local url
+local url = singletons.configuration["yop_hessian_url"]
 
 local CACHE_KEYS = {
   API = "api:",
@@ -28,10 +29,6 @@ local CACHE_KEYS = {
 }
 
 local _M = {}
-
-function _M.init()
-  url = os.getenv("YOP_HESSIAN")
-end
 
 function _M.rawset(key, value)
   return cache:set(key, value)

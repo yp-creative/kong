@@ -35,7 +35,6 @@ local core = require "kong.core.handler"
 local Events = require "kong.core.events"
 local singletons = require "kong.singletons"
 local config_loader = require "kong.tools.config_loader"
-local plugins_iterator = require "kong.core.plugins_iterator"
 
 local ipairs = ipairs
 local table_insert = table.insert
@@ -99,37 +98,37 @@ end
 
 function Kong.ssl_certificate()
   core.certificate.before()
-  for plugin, plugin_conf in plugins_iterator(singletons.loaded_plugins, true) do
-    plugin.handler:certificate(plugin_conf)
+  for _, plugin in ipairs(singletons.loaded_plugins) do
+    plugin.handler:certificate()
   end
 end
 
 function Kong.access()
   core.access.before()
-  for plugin, plugin_conf in plugins_iterator(singletons.loaded_plugins, true) do
-    plugin.handler:access(plugin_conf)
+  for _, plugin in ipairs(singletons.loaded_plugins) do
+    plugin.handler:access()
   end
   core.access.after()
 end
 
 function Kong.header_filter()
   core.header_filter.before()
-  for plugin, plugin_conf in plugins_iterator(singletons.loaded_plugins) do
-    plugin.handler:header_filter(plugin_conf)
+  for _, plugin in ipairs(singletons.loaded_plugins) do
+    plugin.handler:header_filter()
   end
   core.header_filter.after()
 end
 
 function Kong.body_filter()
-  for plugin, plugin_conf in plugins_iterator(singletons.loaded_plugins) do
-    plugin.handler:body_filter(plugin_conf)
+  for _, plugin in ipairs(singletons.loaded_plugins) do
+    plugin.handler:body_filter()
   end
   core.body_filter.after()
 end
 
 function Kong.log()
-  for plugin, plugin_conf in plugins_iterator(singletons.loaded_plugins) do
-    plugin.handler:log(plugin_conf)
+  for _, plugin in ipairs(singletons.loaded_plugins) do
+    plugin.handler:log()
   end
   core.log.after()
 end

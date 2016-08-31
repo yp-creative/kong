@@ -1,4 +1,5 @@
 local responses = require "kong.tools.responses"
+local ngx = ngx
 
 local ErrorCode = {
   ['99001001'] = '应用(%s)无效或不存在,请确认appKey正确且应用状态正常',
@@ -71,6 +72,7 @@ function Response:requestValidatorError(appKey) self.error = { code = '99001007'
 function Response:appendSubError(code, a, b) table.insert(self.error.subErrors, { code = code, message = string.format(ErrorCode[code], a, b) }) return self end
 
 local function sendValidateError(appKey, code, a, b)
+  ngx.ctx.skipBodyFilter = true
   responses.send(200, Response:new():fail():requestValidatorError(appKey):appendSubError(code, a, b))
 end
 
@@ -94,24 +96,49 @@ function Response.validateIntException(p) sendValidateError(p.app, "99100011", p
 
 function Response.validatePatternException(p, rule) sendValidateError(p.app, "99100003", p.name, rule) end
 
-function Response.apiNotExistException(apiUri) responses.send(200, Response:new():fail():errors("99001002", apiUri)) end
+function Response.apiNotExistException(apiUri)
+  ngx.ctx.skipBodyFilter = true
+  responses.send(200, Response:new():fail():errors("99001002", apiUri))
+end
 
-function Response.apiUnavailableException(apiUri) responses.send(200, Response:new():fail():errors("99001003", apiUri)) end
+function Response.apiUnavailableException(apiUri)
+  ngx.ctx.skipBodyFilter = true
+  responses.send(200, Response:new():fail():errors("99001003", apiUri))
+end
 
-function Response.appUnavailableException(appKey) responses.send(200, Response:new():fail():errors("99001001", appKey)) end
+function Response.appUnavailableException(appKey)
+  ngx.ctx.skipBodyFilter = true
+  responses.send(200, Response:new():fail():errors("99001001", appKey))
+end
 
-function Response.missParameterException(appKey, requiredParameter) responses.send(200, Response:new():fail():errors("99001006", appKey, requiredParameter)) end
+function Response.missParameterException(appKey, requiredParameter)
+  ngx.ctx.skipBodyFilter = true
+  responses.send(200, Response:new():fail():errors("99001006", appKey, requiredParameter))
+end
 
-function Response.notAllowdHttpMethodException(appKey, method) responses.send(200, Response:new():fail():errors("99001005", appKey, method)) end
+function Response.notAllowdHttpMethodException(appKey, method)
+  ngx.ctx.skipBodyFilter = true
+  responses.send(200, Response:new():fail():errors("99001005", appKey, method))
+end
 
-function Response.notAllowdIpException(appKey, ip) responses.send(200, Response:new():fail():errors("99001021", appKey, ip)) end
+function Response.notAllowdIpException(appKey, ip)
+  ngx.ctx.skipBodyFilter = true
+  responses.send(200, Response:new():fail():errors("99001021", appKey, ip))
+end
 
-function Response.permessionDeniedException(appKey) responses.send(200, Response:new():fail():errors("99001004", appKey)) end
+function Response.permessionDeniedException(appKey)
+  ngx.ctx.skipBodyFilter = true
+  responses.send(200, Response:new():fail():errors("99001004", appKey))
+end
 
-function Response.signException(appKey) responses.send(200, Response:new():fail():errors("99001008", appKey)) end
+function Response.signException(appKey)
+  ngx.ctx.skipBodyFilter = true
+  responses.send(200, Response:new():fail():errors("99001008", appKey))
+end
 
-function Response.decryptException(appKey) responses.send(200, Response:new():fail():errors("99001009", appKey)) end
-
-
+function Response.decryptException(appKey)
+  ngx.ctx.skipBodyFilter = true
+  responses.send(200, Response:new():fail():errors("99001009", appKey))
+end
 
 return function() return Response, ErrorCode end

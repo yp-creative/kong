@@ -12,6 +12,8 @@
 ## Make sure it has the appropriate permissions.
 # nginx_working_dir: /usr/local/kong/
 
+yop_hessian_url: "http://172.17.102.173:8055/yop-hessian/"
+
 ######
 ## Address and port on which the server will accept HTTP requests, consumers will make requests on this port.
 proxy_listen: "0.0.0.0:7777"
@@ -160,7 +162,7 @@ nginx: |
     }
 
     server {
-      server_name _;
+      server_name yop-center;
       listen {{proxy_listen}};
       listen {{proxy_listen_ssl}} ssl;
 
@@ -172,7 +174,7 @@ nginx: |
       ssl_certificate_key {{ssl_key}};
       ssl_protocols TLSv1 TLSv1.1 TLSv1.2;# omit SSLv3 because of POODLE (CVE-2014-3566)
 
-      location / {
+      location /yop-center {
         default_type 'text/plain';
 
         # These properties will be used later by proxy_pass
