@@ -246,7 +246,7 @@ nginx: |
 
     # Lua Settings
     lua_package_path ';;';
-    lua_package_cpath '/usr/local/lib/luarocks/rocks/kong/0.8.3-0/lib/?.so;./?.so;';
+    lua_package_cpath '/usr/local/lib/luarocks/rocks/kong/0.8.3-0/lib/?.so;./?.so;;';
     lua_code_cache on;
     lua_max_running_timers 4096;
     lua_max_pending_timers 16384;
@@ -267,6 +267,10 @@ nginx: |
 
     init_worker_by_lua_block {
       kong.init_worker()
+    }
+
+    upstream dev.yop-center{
+      server 172.17.102.173:8064;
     }
 
     server {
@@ -364,11 +368,4 @@ nginx: |
         return 200 'User-agent: *\nDisallow: /';
       }
     }
-#
-#     server {
-#            listen 7779;
-#            location / {
-#                dyups_interface;
-#            }
-#        }
   }
