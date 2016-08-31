@@ -155,6 +155,10 @@ nginx: |
       kong.init_worker()
     }
 
+    upstream dev.yop-center{
+      server 172.17.102.173:8064;
+    }
+
     server {
       server_name _;
       listen {{proxy_listen}};
