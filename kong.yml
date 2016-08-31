@@ -364,11 +364,11 @@ nginx: |
         return 200 'User-agent: *\nDisallow: /';
       }
     }
-
-     server {
-            listen 7779;
-            location / {
-                dyups_interface;
-            }
-        }
+#
+#     server {
+#            listen 7779;
+#            location / {
+#                dyups_interface;
+#            }
+#        }
   }
