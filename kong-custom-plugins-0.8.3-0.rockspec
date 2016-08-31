@@ -29,8 +29,9 @@ build = {
     ["kong.plugins.yop.interceptor.default_value"] = "kong/plugins/yop/interceptor/default_value.lua",
     ["kong.plugins.yop.interceptor.prepare_stream"] = "kong/plugins/yop/interceptor/prepare_stream.lua",
     ["kong.plugins.yop.handler"] = "kong/plugins/yop/handler.lua",
-    ["kong.plugins.yop.schema"] = "kong/plugins/yop/schema.lua"
+    ["kong.plugins.yop.schema"] = "kong/plugins/yop/schema.lua",
     ["kong.yop.marshaller_util"] = "kong/yop/marshaller_util.lua",
+    ["so.dkjson"] = "so/dkjson.lua"
 
   }
 }

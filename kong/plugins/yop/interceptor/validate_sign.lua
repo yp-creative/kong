@@ -80,6 +80,7 @@ local function validateSign(ctx)
   end
 
   if encodeBody ~= sign then
+    ngx.log(ngx.ERR,"验证签名失败!")
     response.signException(ctx.appKey)
   end
 end

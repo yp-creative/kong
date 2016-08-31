@@ -3,7 +3,8 @@ local BasePlugin = require "kong.plugins.base_plugin"
 local ipairs = ipairs
 local ngx = ngx
 local table = table
-local cjson = require 'cjson'
+local json = require "so.dkjson"
+local string = string
 
 local initializeCtx = require 'kong.plugins.yop.interceptor.initialize_ctx'
 local httpMethod = require 'kong.plugins.yop.interceptor.http_method'
@@ -59,14 +60,16 @@ local function handleResponse(body)
   -- 无法直接序列化response,因为response中含有function
   local resp = {}
   resp.state = r.state
-  resp.result = r.result
   resp.ts = r.ts
   resp.sign = r.sign
   resp.error = r.error
   resp.stringResult = r.stringResult
   resp.format = r.format
   resp.validSign = r.validSign
-  ngx.arg[1] = cjson.encode(resp)
+  resp.result = r.result
+  ngx.arg[1] = json.encode (resp, { indent = true })   -- "ts":1472608159000
+  ngx.arg[1] = string.gsub(ngx.arg[1],":"," : ")       -- "ts" : 472608159000 客户端只能处理这种
+  ngx.log(ngx.ERR,"ngx.arg[1]:"..ngx.arg[1])
 end
 
 function YopHandler:body_filter()
