@@ -22,11 +22,12 @@ CassandraDB.dao_insert_values = {
 
 function CassandraDB:new(kong_config)
   local conn_opts = {
-    shm = "cassandra",
+    shm = kong_config.cassandra_shm or "cassandra",
     prepared_shm = "cassandra_prepared",
     contact_points = kong_config.cassandra_contact_points,
     keyspace = kong_config.cassandra_keyspace,
     protocol_options = {
+      version = 3,
       default_port = kong_config.cassandra_port
     },
     query_options = {
@@ -439,10 +440,37 @@ function CassandraDB:truncate_table(table_name)
 end
 
 function CassandraDB:current_migrations()
+  local conn_opts = self:_get_conn_options()
+  conn_opts.keyspace = nil
+  local ok, err = cassandra.refresh_hosts(conn_opts)
+  if not ok then
+    return nil, Errors.db(tostring(err))
+  end
+
+  local cluster_info, err = cassandra.get_cluster_info(conn_opts)
+  if not cluster_info then
+    return nil, Errors.db(tostring(err))
+  end
+
+  local cass3 = string.match(cluster_info.release_version, "^3")
+  local keyspace_q, table_q
+
+  if cass3 then
+    keyspace_q = "SELECT * FROM system_schema.keyspaces WHERE keyspace_name = ?"
+    table_q = [[
+      SELECT COUNT(*) FROM system_schema.tables
+      WHERE keyspace_name = ? AND table_name = ?
+    ]]
+  else
+    keyspace_q = "SELECT * FROM system.schema_keyspaces WHERE keyspace_name = ?"
+    table_q = [[
+      SELECT COUNT(*) FROM system.schema_columnfamilies
+      WHERE keyspace_name = ? AND columnfamily_name = ?
+    ]]
+  end
+
   -- Check if keyspace exists
-  local rows, err = self:query([[
-    SELECT * FROM system.schema_keyspaces WHERE keyspace_name = ?
-  ]], {self.options.keyspace}, nil, nil, true)
+  local rows, err = self:query(keyspace_q, {self.options.keyspace}, nil, nil, true)
   if err then
     return nil, err
   elseif #rows == 0 then
@@ -450,10 +478,7 @@ function CassandraDB:current_migrations()
   end
 
   -- Check if schema_migrations table exists first
-  rows, err = self:query([[
-    SELECT COUNT(*) FROM system.schema_columnfamilies
-    WHERE keyspace_name = ? AND columnfamily_name = ?
-  ]], {
+  rows, err = self:query(table_q, {
     self.options.keyspace,
     "schema_migrations"
   })
