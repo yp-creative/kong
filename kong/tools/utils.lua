@@ -9,24 +9,25 @@
 -- @module kong.tools.utils
 
 local url = require "socket.url"
+local ffi = require "ffi"
 local uuid = require "resty.jit-uuid"
 local pl_stringx = require "pl.stringx"
-local ffi = require "ffi"
 
-local fmt = string.format
-local find = string.find
-local gsub = string.gsub
-local type = type
-local pairs = pairs
-local split = pl_stringx.split
-local strip = pl_stringx.strip
-local lower = string.lower
-local ipairs = ipairs
-local re_find = ngx.re.find
-local tostring = tostring
-local table_sort = table.sort
-local table_concat = table.concat
-local table_insert = table.insert
+local C          = ffi.C
+local fmt        = string.format
+local type       = type
+local pairs      = pairs
+local ipairs     = ipairs
+local re_find    = ngx.re.find
+local tostring   = tostring
+local sort       = table.sort
+local concat     = table.concat
+local insert     = table.insert
+local find       = string.find
+local gsub       = string.gsub
+local split      = pl_stringx.split
+local strip      = pl_stringx.strip
+local lower      = string.lower
 
 ffi.cdef[[
 int gethostname(char *name, size_t len);
@@ -47,7 +48,6 @@ _M.strip = strip
 -- @return string  The hostname
 function _M.get_hostname()
   local result
-  local C = ffi.C
   local SIZE = 128
 
   local buf = ffi.new("unsigned char[?]", SIZE)
@@ -57,7 +57,7 @@ function _M.get_hostname()
     local hostname = ffi.string(buf, SIZE)
     result = gsub(hostname, "%z+$", "")
   else
-    local f = io.popen ("/bin/hostname")
+    local f = io.popen("/bin/hostname")
     local hostname = f:read("*a") or ""
     f:close()
     result = gsub(hostname, "\n$", "")
@@ -72,13 +72,6 @@ local v4_uuid = uuid.generate_v4
 -- @function uuid
 -- @return string with uuid
 _M.uuid = uuid.generate_v4
-
---- Seeds the random generator, use with care.
--- Kong already seeds this once per worker process. It's 
--- dangerous to ever call it again. So ask yourself
--- "Do I feel lucky?" Well, do ya, punk?
--- @function uuid_seed
-_M.uuid_seed = uuid.seed
 
 --- Generates a random unique string
 -- @return string  The random string (a uuid without hyphens)
@@ -96,7 +89,7 @@ function _M.is_valid_uuid(str)
   return re_find(str, uuid_regex, 'ioj') ~= nil
 end
 
--- function below is more acurate, but invalidates previously accepted uuids and hence causes 
+-- function below is more acurate, but invalidates previously accepted uuids and hence causes
 -- trouble with existing data during migrations.
 -- see: https://github.com/thibaultcha/lua-resty-jit-uuid/issues/8
 -- function _M.is_valid_uuid(str)
@@ -142,7 +135,7 @@ function _M.encode_args(args, raw)
     keys[#keys+1] = k
   end
 
-  table_sort(keys)
+  sort(keys)
 
   for _, key in ipairs(keys) do
     local value = args[key]
@@ -162,7 +155,7 @@ function _M.encode_args(args, raw)
     end
   end
 
-  return table_concat(query, "&")
+  return concat(query, "&")
 end
 
 --- Checks whether a request is https or was originally https (but already terminated).
@@ -298,7 +291,7 @@ function _M.add_error(errors, k, v)
       errors[k] = setmetatable({errors[k]}, err_list_mt)
     end
 
-    table_insert(errors[k], v)
+    insert(errors[k], v)
   else
     errors[k] = v
   end
@@ -311,14 +304,14 @@ end
 -- loading failed for another reason (eg: syntax error).
 -- @param module_name Path of the module to load (ex: kong.plugins.keyauth.api).
 -- @return success A boolean indicating wether the module was found.
--- @return module The retrieved module.
+-- @return module The retrieved module, or the error in case of a failure
 function _M.load_module_if_exists(module_name)
   local status, res = pcall(require, module_name)
   if status then
     return true, res
   -- Here we match any character because if a module has a dash '-' in its name, we would need to escape it.
   elseif type(res) == "string" and find(res, "module '"..module_name.."' not found", nil, true) then
-    return false
+    return false, res
   else
     error(res)
   end
