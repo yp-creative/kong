@@ -39,7 +39,6 @@ end
 
 local function handleResponse(body)
   local appSecret = ngx.ctx.appSecret
-  ngx.log(ngx.INFO,"app secret:"..appSecret)
   local r = response:new()
   local bizResult = body -- 用作加密,签名
   -- 签名：先处理空格、换行；返回值为空也可签名
@@ -62,7 +61,6 @@ local function handleResponse(body)
   resp.validSign = r.validSign
   resp.result = r.result
   ngx.arg[1] = json.encode (resp, { indent = true })   -- "ts":1472608159000
-  ngx.log(ngx.ERR,"ngx.arg[1]:"..ngx.arg[1])
 end
 
 function YopHandler:body_filter()

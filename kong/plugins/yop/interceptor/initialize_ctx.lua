@@ -21,10 +21,12 @@ local decodeOnceToString = ngx.unescape_uri
 
 local _M = {}
 
+local PREFIX_LENGTH = 1 + #"/yop-center"
+
 local function decodeOnceToTable(body) if body then return ngxDecodeArgs(body) end return {} end
 
 _M.process = function(ctx)
-  local apiUri = ngxVar.uri:gsub("/yop%-center", "")
+  local apiUri = ngxVar.uri:sub(PREFIX_LENGTH)
 
   --  从缓存中获取api信息，如果不存在，就调用远程接口获取api信息并缓存
   local api = cache.cacheApi(apiUri)

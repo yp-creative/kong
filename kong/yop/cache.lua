@@ -16,6 +16,7 @@ local tostring = tostring
 local ngx = ngx
 
 local url = singletons.configuration["yop_hessian_url"]
+local expireTime = singletons.configuration["yop_cache_expired_seconds"]
 
 local CACHE_KEYS = {
   API = "api:",
@@ -31,7 +32,7 @@ local CACHE_KEYS = {
 local _M = {}
 
 function _M.rawset(key, value)
-  return cache:set(key, value)
+  return cache:set(key, value, expireTime)
 end
 
 function _M.set(key, value)
