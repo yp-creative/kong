@@ -3,7 +3,6 @@ local IO = require "kong.tools.io"
 local logger = require "kong.cli.utils.logger"
 local ssl = require "kong.cli.utils.ssl"
 local constants = require "kong.constants"
-local syslog = require "kong.tools.syslog"
 local socket = require "socket"
 
 local Nginx = BaseService:extend()
@@ -45,13 +44,13 @@ local function prepare_ssl_certificates(configuration)
     return false, err
   end
 
-  local trusted_ssl_cert_path = configuration.dao_config.ssl and
-                                configuration.dao_config.ssl.certificate_authority or nil
+--  local trusted_ssl_cert_path = configuration.dao_config.ssl and
+--                                configuration.dao_config.ssl.certificate_authority or nil
 
   return {
     ssl_cert_path = res.ssl_cert_path,
     ssl_key_path = res.ssl_key_path,
-    trusted_ssl_cert_path = trusted_ssl_cert_path
+    trusted_ssl_cert_path = nil
   }
 end
 
@@ -79,12 +78,11 @@ local function prepare_nginx_configuration(configuration, ssl_config)
     proxy_listen = configuration.proxy_listen,
     proxy_listen_ssl = configuration.proxy_listen_ssl,
     admin_api_listen = configuration.admin_api_listen,
-    dns_resolver = configuration.dns_resolver.address,
+--    dns_resolver = configuration.dns_resolver.address,
     memory_cache_size = configuration.memory_cache_size,
     ssl_cert = ssl_config.ssl_cert_path,
     ssl_key = ssl_config.ssl_key_path,
-    lua_ssl_trusted_certificate = ssl_config.trusted_ssl_cert_path and
-                                  'lua_ssl_trusted_certificate "'..configuration.dao_config.ssl.certificate_authority..'";' or ""
+    lua_ssl_trusted_certificate = ssl_config.trusted_ssl_cert_path or ""
   }
 
   -- Auto-tune
@@ -99,16 +97,6 @@ local function prepare_nginx_configuration(configuration, ssl_config)
   -- Inject properties
   for k, v in pairs(nginx_inject) do
     nginx_config = nginx_config:gsub("{{"..k.."}}", v)
-  end
-
-  -- Inject anonymous reports
-  if configuration.send_anonymous_reports then
-    -- If there is no internet connection, disable this feature
-    if socket.dns.toip(constants.SYSLOG.ADDRESS) then
-      nginx_config = "error_log syslog:server="..constants.SYSLOG.ADDRESS..":"..tostring(constants.SYSLOG.PORT).." error;\n"..nginx_config
-    else
-      logger:warn("The internet connection might not be available, cannot resolve "..constants.SYSLOG.ADDRESS)
-    end
   end
 
   -- Write nginx config
@@ -168,11 +156,6 @@ function Nginx:_invoke_signal(cmd, signal)
     if code == 0 and tonumber(res) < 4096 then
       logger:warn("ulimit is currently set to \""..res.."\". For better performance set it to at least \"4096\" using \"ulimit -n\"")
     end
-  end
-
-  -- Report signal action
-  if self._configuration.send_anonymous_reports then
-    syslog.log({signal=signal})
   end
 
   -- Start failure handler

@@ -16,16 +16,17 @@ local cache = require 'kong.yop.cache'
 local response, _ = require 'kong.yop.response'()
 
 local ngxVar = ngx.var
-
+local ngx = ngx
 local decodeOnceToString = ngx.unescape_uri
 
 local _M = {}
 
+local PREFIX_LENGTH = 1 + #"/yop-center"
+
 local function decodeOnceToTable(body) if body then return ngxDecodeArgs(body) end return {} end
 
 _M.process = function(ctx)
-  local requestPath = ngx.ctx.api.request_path
-  local apiUri = requestPath:gsub("/yop%-center", "")
+  local apiUri = ngxVar.uri:sub(PREFIX_LENGTH)
 
   --  从缓存中获取api信息，如果不存在，就调用远程接口获取api信息并缓存
   local api = cache.cacheApi(apiUri)
@@ -74,11 +75,10 @@ _M.process = function(ctx)
   ctx.auth = cache.cacheAppAuth(appKey)
   ctx.defaultValues = cache.cacheDefaultValues(apiUri)
 
-  ngx.ctx.parameters = ctx.parameters
+  ngx.ctx.encrypt = parameters.encrypt
   ngx.ctx.keyStoreType = ctx.keyStoreType
-  ngx.ctx.alg = ctx.api.signAlg
-  ngx.ctx.appSecret = ctx.app.appSecret      -- 将 appSercet 作为全局变量放在ngx.ctx里面,供转发后返回加密和签名使用/
-  ngx.ctx.body = ""
+  ngx.ctx.alg = api.signAlg
+  ngx.ctx.appSecret = app.appSecret -- 将 appSercet 作为全局变量放在ngx.ctx里面,供转发后返回加密和签名使用/
 end
 
 return _M
