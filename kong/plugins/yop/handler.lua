@@ -3,7 +3,7 @@ local BasePlugin = require "kong.plugins.base_plugin"
 local ipairs = ipairs
 local ngx = ngx
 local table = table
-local json = require "so.dkjson"
+local json = require "kong.yop.dkjson"
 local cjson = require "cjson"
 local initializeCtx = require 'kong.plugins.yop.interceptor.initialize_ctx'
 
