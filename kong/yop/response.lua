@@ -1,5 +1,5 @@
 local responses = require "kong.tools.responses"
-local ngx = ngx
+local ngx, string, table = ngx, string, table
 
 local ErrorCode = {
   ['99001001'] = '应用(%s)无效或不存在,请确认appKey正确且应用状态正常',
@@ -23,6 +23,7 @@ local ErrorCode = {
   ['99001019'] = '应用(%s)文件格式不对，正确格式为：<文件格式>@<文件内容>',
   ['99001020'] = '应用(%s)报文加解密异常',
   ['99001021'] = '应用(%s)非白名单IP，当前IP:%s',
+  ['99001022'] = '应用(%s)调用业务系统异常:%s',
   ['99999000'] = '应用(%s)系统异常，请稍后重试',
   ['99100001'] = '参数%s不允许为NULL',
   ['99100002'] = '参数%s不允许为空',
@@ -46,9 +47,7 @@ local Response = {
   ts = nil,
   sign = nil,
   error = nil,
-  stringResult = nil,
-  format = "json",
-  validSign = nil
+  format = "json"
 }
 
 function Response:new()

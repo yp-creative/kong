@@ -14,6 +14,7 @@ local getRequestMethod = ngx.req.get_method
 
 local cache = require 'kong.yop.cache'
 local response, _ = require 'kong.yop.response'()
+local singletons = require "kong.singletons"
 
 local ngxVar = ngx.var
 local ngx = ngx
@@ -22,8 +23,15 @@ local decodeOnceToString = ngx.unescape_uri
 local _M = {}
 
 local PREFIX_LENGTH = 1 + #"/yop-center"
+local YOP_CENTER_URL = singletons.configuration["yop_center_url"]
+YOP_CENTER_URL = YOP_CENTER_URL:sub(1, #YOP_CENTER_URL - 1)
 
 local function decodeOnceToTable(body) if body then return ngxDecodeArgs(body) end return {} end
+
+local getOriginalParameters = {
+  GET = function() return ngxVar.args end,
+  POST = function() readRequestBody() return getRequestBody() end
+}
 
 _M.process = function(ctx)
   local apiUri = ngxVar.uri:sub(PREFIX_LENGTH)
@@ -35,19 +43,13 @@ _M.process = function(ctx)
   if api == nil then response.apiNotExistException(apiUri) end
   if api.status ~= 'ACTIVE' then response.apiUnavailableException(apiUri) end
 
+  --  如果是未迁移api，直接转发至yop-center
+  if api.fork == "YOP_CENTER" then ctx.nginx, ngx.ctx.skipBodyFilter, ngx.ctx.upstream_url = false, true, YOP_CENTER_URL .. apiUri end
+
   local method = getRequestMethod()
 
   --  parameters需要做2次urldecode
-
-  local original
-  if method == 'GET' then
-    original = ngxVar.args
-  else
-    readRequestBody()
-    original = getRequestBody()
-  end
-
-  local parameters = decodeOnceToTable(decodeOnceToString(original))
+  local parameters = decodeOnceToTable(decodeOnceToString(getOriginalParameters[method]()))
 
   local appKey = parameters['appKey']
   if not appKey then
@@ -74,10 +76,11 @@ _M.process = function(ctx)
   ctx.whitelist = cache.cacheIPWhitelist(apiUri)
   ctx.auth = cache.cacheAppAuth(appKey)
   ctx.defaultValues = cache.cacheDefaultValues(apiUri)
+  ctx.upstreams = cache.cacheUpstream(api.backendApp)
 
   ngx.ctx.encrypt = parameters.encrypt
   ngx.ctx.keyStoreType = ctx.keyStoreType
-  ngx.ctx.alg = api.signAlg
+  ngx.ctx.signAlg = api.signAlg
   ngx.ctx.appSecret = app.appSecret -- 将 appSercet 作为全局变量放在ngx.ctx里面,供转发后返回加密和签名使用/
 end
 

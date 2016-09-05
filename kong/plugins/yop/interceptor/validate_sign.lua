@@ -73,11 +73,7 @@ local function validateSign(ctx)
   end
   local needSignKeys = prepareSignParams(ctx)
   local signBody = prepareSignBody(ctx, needSignKeys)
-  local encodeBody
-  local encodeBody, support = security_center.validataSign(signBody, alg)
-  if (not support) then
-    ngx.log(ngx.ERR, "不支持的签名算法!")
-  end
+  local encodeBody = security_center.signRawString(signBody, alg)
 
   if encodeBody ~= sign then
     ngx.log(ngx.ERR,"验证签名失败!")
