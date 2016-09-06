@@ -15,6 +15,9 @@
 ## yop-hessian的地址，默认http://yop.core.3g:8080/yop-hessian/
 yop_hessian_url: "http://172.17.102.173:8055/yop-hessian/"
 
+## yop-center，默认http://yop.center.3g/yop-center/
+yop_center_url: "http://172.17.102.173:8064/yop-center/"
+
 ## yop nginx本地缓存失效时间（秒），默认5分钟（300秒）
 yop_cache_expired_seconds: 10
 
@@ -89,7 +92,7 @@ admin_api_listen: "0.0.0.0:7778"
 nginx: |
   {{user}}
   worker_processes auto;
-  error_log logs/error.log info;
+  error_log logs/error.log notice;
   daemon on;
 
   worker_rlimit_nofile {{auto_worker_rlimit_nofile}};
@@ -139,16 +142,14 @@ nginx: |
     # Lua Settings
     lua_package_path '/Users/zhangwenkang/Documents/ideaworkspace/yop-nginx/kong/?.lua;;;';
     lua_package_cpath '/usr/local/lib/luarocks/rocks/kong/0.8.3-0/lib/?.so;./?.so;;';
-    lua_code_cache on;
+    lua_code_cache off;
     lua_max_running_timers 4096;
     lua_max_pending_timers 16384;
     lua_shared_dict reports_locks 100k;
     lua_shared_dict cluster_locks 100k;
     lua_shared_dict cluster_autojoin_locks 100k;
     lua_shared_dict cache {{memory_cache_size}}m;
-    lua_shared_dict cassandra 1m;
-    lua_shared_dict cassandra_prepared 5m;
-    lua_shared_dict yop 10m;
+    lua_shared_dict yop 50m;
     lua_socket_log_errors off;
     {{lua_ssl_trusted_certificate}}
 
@@ -159,10 +160,6 @@ nginx: |
 
     init_worker_by_lua_block {
       kong.init_worker()
-    }
-
-    upstream dev.yop-center{
-      server 172.17.102.173:8064;
     }
 
     server {
@@ -194,7 +191,6 @@ nginx: |
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Nginx-Forwarded true;
         proxy_set_header Host $upstream_host;
         proxy_pass $upstream_url;
         proxy_pass_header Server;
@@ -260,4 +256,11 @@ nginx: |
         return 200 'User-agent: *\nDisallow: /';
       }
     }
+
+     server {
+            listen 7779;
+            location / {
+                dyups_interface;
+            }
+        }
   }
