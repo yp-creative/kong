@@ -2,8 +2,8 @@ package = "kong"
 version = "0.8.3-0"
 supported_platforms = {"linux", "macosx"}
 source = {
-  url = "git://github.com/Mashape/kong",
-  tag = "0.8.3"
+  url = "git://github.com/yp-creative/kong",
+  branch = "develop"
 }
 description = {
   summary = "Kong is a scalable and customizable API Management Layer built on top of Nginx.",
@@ -243,12 +243,6 @@ build = {
     ["kong.plugins.hmac-auth.hooks"] = "kong/plugins/hmac-auth/hooks.lua",
     ["kong.plugins.hmac-auth.api"] = "kong/plugins/hmac-auth/api.lua",
     ["kong.plugins.hmac-auth.daos"] = "kong/plugins/hmac-auth/daos.lua",
-
-    ["kong.plugins.ldap-auth.handler"] = "kong/plugins/ldap-auth/handler.lua",
-    ["kong.plugins.ldap-auth.access"] = "kong/plugins/ldap-auth/access.lua",
-    ["kong.plugins.ldap-auth.schema"] = "kong/plugins/ldap-auth/schema.lua",
-    ["kong.plugins.ldap-auth.ldap"] = "kong/plugins/ldap-auth/ldap.lua",
-    ["kong.plugins.ldap-auth.asn1"] = "kong/plugins/ldap-auth/asn1.lua",
 
     ["kong.plugins.syslog.handler"] = "kong/plugins/syslog/handler.lua",
     ["kong.plugins.syslog.schema"] = "kong/plugins/syslog/schema.lua",

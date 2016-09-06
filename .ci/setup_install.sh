@@ -1,28 +1,28 @@
 #!/bin/sh
 
-1.安装pcre openssl等
+# 1.安装pcre openssl等
 
-# Fedora 和 RedHat 用户
+if ["" -eq `which yum`]; then
+    # Debian 和 Ubuntu 用户
+    apt-get update & apt-get upgrade
+    apt-get install vim git unzip gcc perl libpcre3 libpcre3-dev openssl libssl-dev libreadline-gplv2-dev libncurses5-dev uuid-dev build-essential luajit
+else
+    # Fedora 和 RedHat 用户
+    sudo yum install -y pcre openssl readline-devel pcre-devel openssl-devel gcc libuuid libuuid-devel mcrypt
+fi
 
-sudo yum install -y pcre openssl readline-devel pcre-devel openssl-devel gcc libuuid
-libuuid libuuid-devel mcrypt
-
-# Debian 和 Ubuntu 用户
-
-apt-get update & apt-get upgrade
-apt-get install vim git unzip perl libpcre3 libpcre3-dev openssl libssl-dev libreadline-gplv2-dev libncurses5-dev gcc uuid-dev build-essential
-
-2.下载dyups
+# 2.下载dyups
 
 cd /opt
 git clone git://github.com/yzprofile/ngx_http_dyups_module.git
 
-3.下载serf并解压至/usr/local/bin/
+# 3.下载serf并解压至/usr/local/bin/
 
 wget https://releases.hashicorp.com/serf/0.7.0/serf_0.7.0_linux_amd64.zip
 unzip serf_0.7.0_linux_amd64.zip -d /usr/local/bin/
 
-4.下载并安装openresty
+# 4.下载并安装openresty
+
 # --prefix=/usr/local/openresty 程序会被安装到/usr/local/openresty目录
 
 wget http://openresty.org/download/ngx_openresty-1.9.15.1.tar.gz
@@ -40,7 +40,7 @@ make install
 
 export PATH="$PATH:/usr/local/openresty/bin"
 
-6.下载并安装luarocks
+# 6.下载并安装luarocks
 
 cd /opt
 wget http://keplerproject.github.io/luarocks/releases/luarocks-2.3.0.tar.gz
@@ -54,26 +54,11 @@ make -j2
 make build
 make install
 
-7.
+# 7.
 
-# TODO why?
-# git archive --remote=http://baitao.ji@172.17.103.2/git/yop-nginx/ HEAD kong-custom-plugins-latest.rockspec
-# fatal: Operation not supported by protocol.
-
-# fuck our company's git rep
-# curl http://172.17.103.2/git/yop-nginx/kong-custom-plugins-latest.rockspec > /usr/local/kong/plugins/kong-custom-plugins-latest.rockspec
+cd /opt
+curl https://raw.githubusercontent.com/yp-creative/kong/develop/kong-0.8.3-0.rockspec > /usr/local/kong/plugins/kong-0.8.3-0.rockspec
+curl https://raw.githubusercontent.com/yp-creative/kong/develop/kong-custom-plugins-0.8.3-0.rockspec > /usr/local/kong/plugins/kong-custom-plugins-0.8.3-0.rockspec
 
 luarocks install ./kong-0.8.3-0.rockspec
 luarocks install ./kong-custom-plugins-0.8.3-0.rockspec
-
-# or
-
-git clone http://172.17.103.2/git/yop-nginx/
-cd yop-nginx/
-git checkout origin/develop
-cp kong-latest.rockspec ..
-cp kong-custom-plugins-latest.rockspec ..
-rm -Rf yop-nginx/
-make install
-mkdir -p /etc/kong/
-cp kong.yml /etc/kong/
