@@ -9,10 +9,7 @@
 local response, _ = require 'kong.yop.response'()
 local security_center = require 'kong.yop.security_center'
 
-local table = table
-local string = string
-local pairs = pairs
-local ngx = ngx
+local table, string, pairs, ngx = table, string, pairs, ngx
 
 function table.containKey(t, key)
   for _, v in pairs(t) do
@@ -63,7 +60,8 @@ local function prepareSignBody(ctx, needSignKeys)
   return signBody .. secret
 end
 
-local function validateSign(ctx)
+local _M = {}
+_M.process = function(ctx)
   local parameters = ctx.parameters
   local signRet = parameters.signRet -- 客户端是否有过签名
   local sign = parameters.sign -- 签名摘要
@@ -76,13 +74,8 @@ local function validateSign(ctx)
   local encodeBody = security_center.signRawString(signBody, alg)
 
   if encodeBody ~= sign then
-    ngx.log(ngx.ERR,"验证签名失败!")
+    ngx.log(ngx.ERR, "验证签名失败!")
     response.signException(ctx.appKey)
   end
-end
-
-local _M = {}
-_M.process = function(ctx)
-  validateSign(ctx)
 end
 return _M

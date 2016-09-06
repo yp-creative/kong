@@ -1,8 +1,6 @@
 local BasePlugin = require "kong.plugins.base_plugin"
 
-local ipairs = ipairs
-local ngx = ngx
-local table = table
+local ipairs, ngx, table = ipairs, ngx, table
 local json = require "kong.yop.dkjson"
 local cjson = require "cjson"
 local initializeCtx = require 'kong.plugins.yop.interceptor.initialize_ctx'
@@ -21,6 +19,7 @@ local interceptors = {
   require 'kong.plugins.yop.interceptor.request_transformer',
   require 'kong.plugins.yop.interceptor.load_balance'
 }
+local keyOrder = { "state", "result", "ts", "sign", "error" }
 
 local YopHandler = BasePlugin:extend()
 
@@ -43,20 +42,24 @@ function YopHandler:body_filter()
   if (not ngx.arg[2]) then ngx.ctx.body, ngx.arg[1] = table.concat({ ngx.ctx.body, ngx.arg[1] }), nil return end
 
   -- body接收完全了
+
   local body = cjson.decode(ngx.ctx.body)
+
   local r = response:new()
-  r.state = body.status
+  local success = true
+  if body.status ~= "SUCCESS" then
+    r:fail()
+    r.error, success = { code = body.exception.code, message = body.exception.errMsg }, false
+  else
+    r.result = body.result -- 用作加密,签名
+  end
 
   local appSecret, keyStoreType, signAlg = ngx.ctx.appSecret, ngx.ctx.keyStoreType, ngx.ctx.signAlg
-
-  r.result = body.result -- 用作加密,签名
   -- 签名：先处理空格、换行；返回值为空也可签名
   security_center.signResponse(r, appSecret, signAlg)
-
   -- 加密：不处理空格、换行；返回值为空则不做加密
-  if ngx.ctx.encrypt and r.result ~= "" then security_center.encryptResponse(r, keyStoreType, appSecret) end
-
-  ngx.arg[1] = json.encode(r, { indent = true }) -- "ts":1472608159000
+  if success and ngx.ctx.encrypt and r.result ~= cjson.null then security_center.encryptResponse(r, keyStoreType, appSecret) end
+  ngx.arg[1] = json.encode(r, { indent = true, keyOrder = keyOrder }) -- "ts":1472608159000
 end
 
 YopHandler.PRIORITY = 800

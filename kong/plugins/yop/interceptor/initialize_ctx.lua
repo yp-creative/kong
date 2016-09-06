@@ -44,7 +44,8 @@ _M.process = function(ctx)
   if api.status ~= 'ACTIVE' then response.apiUnavailableException(apiUri) end
 
   --  如果是未迁移api，直接转发至yop-center
-  if api.fork == "YOP_CENTER" then ctx.nginx, ngx.ctx.skipBodyFilter, ngx.ctx.upstream_url = false, true, YOP_CENTER_URL .. apiUri end
+  ngx.log(ngx.NOTICE,"api fork:"..api.fork)
+  if api.fork == "YOP_CENTER" then ctx.nginx, ngx.ctx.skipBodyFilter, ngx.ctx.upstream_url = false, true, YOP_CENTER_URL .. apiUri return end
 
   local method = getRequestMethod()
 

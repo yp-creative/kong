@@ -117,6 +117,14 @@ local function remoteGetAppAuth(appKey)
   return auth
 end
 
+local function getEndParamPrefixes(endParamName)
+  local prefixes = {}
+  for prefix in string.gmatch(endParamName, "[^.]+") do
+    table.insert(prefixes, prefix)
+  end
+  return prefixes
+end
+
 local function remoteGetTransformer(api)
   ngx.log(ngx.NOTICE, "remote get api transformer info...api:" .. api)
   local j = httpClient.post(url .. "/api", { apiUri = api, type = "param" }, { ['accept'] = "application/json" })
@@ -129,7 +137,7 @@ local function remoteGetTransformer(api)
     local paramName = value.paramName
     local endParamName = value.endParamName
     if endParamName == nil or stringy.strip(endParamName) == '' then endParamName = paramName end
-    transformer[ei + 1][endParamName] = paramName
+    transformer[ei + 1][endParamName] = { paramName = paramName, prefixes = getEndParamPrefixes(endParamName) }
   end
   return transformer
 end

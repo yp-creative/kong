@@ -55,6 +55,7 @@ function Response:new()
   setmetatable(o, self)
   self.__index = self
   o.ts = os.time() * 1000
+  o.state = "SUCCESS"
   return o
 end
 

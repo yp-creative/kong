@@ -43,7 +43,9 @@ end
 function _M.signRawString(rawString, alg) return SIGN_ALGS[alg](rawString) end
 
 function _M.signResponse(r, appSecret, alg)
-  r.sign = _M.signRawString(table.concat({ appSecret, r.state, r.result, r.ts, appSecret }), alg)
+  local result = ""
+  if r.state == "SUCCESS" then result = r.result end
+  r.sign = _M.signRawString(table.concat({ appSecret, r.state, result, r.ts, appSecret }), alg)
 end
 
 function _M.encryptResponse(r, keyStoreType, appSecret)
