@@ -32,12 +32,10 @@ _G._KONG = {
 }
 
 local core = require "kong.core.handler"
-local Events = require "kong.core.events"
 local singletons = require "kong.singletons"
 local config_loader = require "kong.tools.config_loader"
 
 local ipairs, pairs = ipairs, pairs
-local table_insert = table.insert
 
 -- Attach a hooks table to the event bus
 local function attach_hooks(events, hooks)
@@ -65,7 +63,6 @@ local Kong = {}
 function Kong.init()
   local status, err = pcall(function()
     singletons.configuration = config_loader.load(os.getenv("KONG_CONF"))
-    singletons.events = Events()
     singletons.loaded_plugins = {
       {
         name = "yop",

@@ -62,11 +62,8 @@ build = {
     ["kong.cli.cmds.restart"] = "kong/cli/cmds/restart.lua",
     ["kong.cli.cmds.version"] = "kong/cli/cmds/version.lua",
     ["kong.cli.cmds.status"] = "kong/cli/cmds/status.lua",
-    ["kong.cli.cmds.migrations"] = "kong/cli/cmds/migrations.lua",
-    ["kong.cli.cmds.cluster"] = "kong/cli/cmds/cluster.lua",
     ["kong.cli.services.base_service"] = "kong/cli/services/base_service.lua",
     ["kong.cli.services.dnsmasq"] = "kong/cli/services/dnsmasq.lua",
-    ["kong.cli.services.serf"] = "kong/cli/services/serf.lua",
     ["kong.cli.services.nginx"] = "kong/cli/services/nginx.lua",
 
     ["kong.api.app"] = "kong/api/app.lua",
@@ -81,7 +78,6 @@ build = {
 
     ["kong.tools.io"] = "kong/tools/io.lua",
     ["kong.tools.utils"] = "kong/tools/utils.lua",
-    ["kong.tools.faker"] = "kong/tools/faker.lua",
     ["kong.tools.syslog"] = "kong/tools/syslog.lua",
     ["kong.tools.ngx_stub"] = "kong/tools/ngx_stub.lua",
     ["kong.tools.printable"] = "kong/tools/printable.lua",
