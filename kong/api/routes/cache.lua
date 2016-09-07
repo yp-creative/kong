@@ -1,5 +1,5 @@
 local responses = require "kong.tools.responses"
-local cache = require "kong.tools.database_cache"
+local cache = require "kong.yop.cache"
 
 return {
   ["/cache/"] = {
