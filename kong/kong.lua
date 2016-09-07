@@ -46,20 +46,6 @@ local function attach_hooks(events, hooks)
   end
 end
 
--- Load enabled plugins on the node.
--- Get plugins in the DB (distinct by `name`), compare them with plugins
--- in `configuration.plugins`. If both lists match, return a list
--- of plugins sorted by execution priority for lua-nginx-module's context handlers.
--- @treturn table Array of plugins to execute in context handlers.
-local function load_node_plugins()
-  local sorted_plugins = {}
-  table_insert(sorted_plugins, {
-    name = "yop",
-    handler = require("kong.plugins.yop.handler")
-  })
-  return sorted_plugins
-end
-
 -- Kong public context handlers.
 -- @section kong_handlers
 
@@ -80,7 +66,12 @@ function Kong.init()
   local status, err = pcall(function()
     singletons.configuration = config_loader.load(os.getenv("KONG_CONF"))
     singletons.events = Events()
-    singletons.loaded_plugins = load_node_plugins()
+    singletons.loaded_plugins = {
+      {
+        name = "yop",
+        handler = require("kong.plugins.yop.handler")
+      }
+    }
     ngx.update_time()
   end)
   if not status then
@@ -90,16 +81,8 @@ function Kong.init()
 end
 
 function Kong.init_worker()
-  core.init_worker.before()
   for _, plugin in ipairs(singletons.loaded_plugins) do
     plugin.handler:init_worker()
-  end
-end
-
-function Kong.ssl_certificate()
-  core.certificate.before()
-  for _, plugin in ipairs(singletons.loaded_plugins) do
-    plugin.handler:certificate()
   end
 end
 

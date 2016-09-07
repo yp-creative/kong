@@ -94,12 +94,6 @@ build = {
     ["kong.tools.config_loader"] = "kong/tools/config_loader.lua",
 
     ["kong.core.handler"] = "kong/core/handler.lua",
-    ["kong.core.certificate"] = "kong/core/certificate.lua",
-    ["kong.core.resolver"] = "kong/core/resolver.lua",
-    ["kong.core.plugins_iterator"] = "kong/core/plugins_iterator.lua",
-    ["kong.core.hooks"] = "kong/core/hooks.lua",
-    ["kong.core.reports"] = "kong/core/reports.lua",
-    ["kong.core.cluster"] = "kong/core/cluster.lua",
     ["kong.core.events"] = "kong/core/events.lua",
     ["kong.core.error_handlers"] = "kong/core/error_handlers.lua",
 

@@ -8,9 +8,7 @@
 -- In the `access_by_lua` phase, it is responsible for retrieving the API being proxied by
 -- a Consumer. Then it is responsible for loading the plugins to execute on this request.
 local utils = require "kong.tools.utils"
-local cluster = require "kong.core.cluster"
 local constants = require "kong.constants"
-local certificate = require "kong.core.certificate"
 
 local ngx_now = ngx.now
 local server_header = _KONG._NAME.."/".._KONG._VERSION
@@ -21,16 +19,6 @@ end
 
 -- in the table below the `before` and `after` is to indicate when they run; before or after the plugins
 return {
-  init_worker = {
-    before = function()
---      cluster.init_worker()
-    end
-  },
-  certificate = {
-    before = function()
-      ngx.ctx.api = certificate.execute()
-    end
-  },
   access = {
     before = function()
       ngx.ctx.KONG_ACCESS_START = get_now()
