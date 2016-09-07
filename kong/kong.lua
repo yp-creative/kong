@@ -36,7 +36,7 @@ local Events = require "kong.core.events"
 local singletons = require "kong.singletons"
 local config_loader = require "kong.tools.config_loader"
 
-local ipairs = ipairs
+local ipairs, pairs = ipairs, pairs
 local table_insert = table.insert
 
 -- Attach a hooks table to the event bus

@@ -31,18 +31,11 @@ local CACHE_KEYS = {
 
 local _M = {}
 
-function _M.rawset(key, value)
-  return cache:set(key, value, expireTime)
-end
+function _M.rawset(key, value) return cache:set(key, value, expireTime) end
 
-function _M.set(key, value)
-  if value then value = json.encode(value) end
-  return _M.rawset(key, value)
-end
+function _M.set(key, value) if value then value = json.encode(value) end return _M.rawset(key, value) end
 
-function _M.rawget(key)
-  return cache:get(key)
-end
+function _M.rawget(key) return cache:get(key) end
 
 function _M.get(key)
   local value, flags = _M.rawget(key)
@@ -64,53 +57,36 @@ function _M.get_or_set(original_key, key, cb)
   if not value then
     -- Get from closure
     value, err = cb(original_key)
-    if err then
-      return nil, err
+    if err then return nil, err
     elseif value then
       local ok, err = _M.set(key, value)
-      if not ok then
-        ngx.log(ngx.ERR, err)
-      end
+      if not ok then ngx.log(ngx.ERR, err) end
     end
   end
   return value
 end
-
-local function isEmptyTable(t) return next(t) == nil end
 
 local function post(path, param)
   local j = httpClient.post(url .. "/" .. path, param, { ['accept'] = "application/json" })
   return json.decode(j)
 end
 
-local function getEndParamPrefixes(endParamName)
-  local prefixes = {}
-  for prefix in string.gmatch(endParamName, "[^.]+") do
-    table.insert(prefixes, prefix)
-  end
-  return prefixes
-end
-
-local function generateNginxUpstreamServers(servers)
-  if servers == nil or isEmptyTable(servers) then return nil end
-  return "server " .. table.concat(servers, ";\nserver ") .. ";"
-end
-
 function _M.cacheApi(api)
   return _M.get_or_set(api, CACHE_KEYS.API .. api, function(api)
     ngx.log(ngx.NOTICE, "remote get api info...api:" .. api)
     local o = post("api", { apiUri = api })
-    if isEmptyTable(o) then return {} end
+    if not next(o) then return {} end
 
     --  api basic info
     local basic = o.basic
     local endClass, endMethod = basic.endClass, basic.endMethod
 
-    local i = endClass:find(".[^.]*$")
-    basic.bareClass = endClass:sub(i + 1)
+    local i = endClass:find("%.[^.]*$")
+    if i then endClass = endClass:sub(i + 1) end
+    basic.bareClass = endClass
 
     i = endMethod:find("%(")
-    if i ~= nil then endMethod = endMethod:sub(1, i - 1) end
+    if i then endMethod = endMethod:sub(1, i - 1) end
     endMethod = endMethod:gsub("void ", "")
     basic.bareMethod = stringy.strip(endMethod)
 
@@ -121,7 +97,7 @@ function _M.cacheApi(api)
       if ei >= #transformer then for k = #transformer, ei, 1 do table.insert(transformer, {}) end end
       if endParamName == nil or stringy.strip(endParamName) == '' then endParamName = paramName end
       --    transformer info
-      transformer[ei + 1][endParamName] = { paramName = paramName, prefixes = getEndParamPrefixes(endParamName) }
+      transformer[ei + 1][endParamName] = { paramName = paramName, prefixes = stringy.split(endParamName, ".") }
 
       --    default value info
       if defaultValue ~= nil then defaultValues[paramName] = defaultValue end
@@ -149,7 +125,7 @@ function _M.cacheIPWhitelist(api)
   return _M.get_or_set(api, CACHE_KEYS.WHITELIST .. api, function(api)
     ngx.log(ngx.NOTICE, "remote get api whitelist info...api:" .. api)
     local o = post("limit", { apiUri = api })
-    if isEmptyTable(o) then return {} end
+    if not next(o) then return {} end
     local whitelist = {}
     for _, value in pairs(o) do
       if value.limitType == 'WHITELIST' and value.status == 'ENABLE' then
@@ -173,12 +149,10 @@ function _M.cacheAppAuth(appKey)
   return _M.get_or_set(appKey, CACHE_KEYS.APP_AUTH .. appKey, function(appKey)
     ngx.log(ngx.NOTICE, "remote get app auth info...appKey:" .. appKey)
     local o = post("auth", { appKey = appKey })
-    if isEmptyTable(o) then return {} end
+    if not next(o) then return {} end
 
     local auth = {}
-    for _, value in pairs(o) do
-      auth[tostring(value.apiId)] = true
-    end
+    for _, value in pairs(o) do auth[tostring(value.apiId)] = true end
     return auth
   end)
 end
@@ -188,10 +162,10 @@ function _M.cacheUpstream(backendApp)
   return _M.get_or_set(backendApp, CACHE_KEYS.UPSTREAM .. backendApp, function(backendApp)
     ngx.log(ngx.NOTICE, "remote get backend app info...backendApp:" .. backendApp)
     local o = post("upstream", { backendApp = backendApp })
-    if isEmptyTable(o) then return {} end
+    if not next(o) then return {} end
     for _, value in ipairs(o) do
       local name = value.name
-      local servers = generateNginxUpstreamServers(value.servers)
+      local servers = "server " .. table.concat(value.servers, ";\nserver ") .. ";"
       ngx.log(ngx.NOTICE, string.format('dyups.update(%s, "%s")', name, servers))
       local status, rv = dyups.update(name, servers)
       if status ~= 200 then ngx.log(ngx.ALERT, string.format('dyups.update(%s, "%s") failed: %s', name, servers, tostring(rv))) return nil end
