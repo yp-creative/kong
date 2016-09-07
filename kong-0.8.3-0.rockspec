@@ -63,7 +63,6 @@ build = {
     ["kong.cli.cmds.version"] = "kong/cli/cmds/version.lua",
     ["kong.cli.cmds.status"] = "kong/cli/cmds/status.lua",
     ["kong.cli.services.base_service"] = "kong/cli/services/base_service.lua",
-    ["kong.cli.services.dnsmasq"] = "kong/cli/services/dnsmasq.lua",
     ["kong.cli.services.nginx"] = "kong/cli/services/nginx.lua",
 
     ["kong.api.app"] = "kong/api/app.lua",
