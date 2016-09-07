@@ -10,7 +10,7 @@ local ngx, ipairs, math, table = ngx, ipairs, math, table
 local _M = {}
 
 local route = {
-  RANDOM = function(rule) return math.random(1, rule.denominator) <= rule.denominator end,
+  RANDOM = function(rule) return math.random(1, rule.denominator) <= rule.numerator end,
   VALUE_EQUAL = function(rule, ctx) return ctx.parameters[rule.parameterName] == rule.parameterValue end
 }
 
@@ -24,10 +24,10 @@ end
 _M.process = function(ctx)
   local api = ctx.api
   for _, upstream in ipairs(ctx.upstreams) do
-    if upstream.immutable then buildUpstream(upstream, api) return end
+    if upstream.immutable then buildUpstream(upstream, api) ngx.log(ngx.NOTICE,"upstream "..upstream.name.." is selected") return end
 
     local rule = upstream.routeRule
-    if route[rule.ruleType](rule, ctx) then buildUpstream(upstream, api) return end
+    if route[rule.ruleType](rule, ctx) then buildUpstream(upstream, api) ngx.log(ngx.NOTICE,"upstream "..upstream.name.." is selected") return end
   end
 end
 
