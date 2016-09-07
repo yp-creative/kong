@@ -12,11 +12,11 @@
 ## Make sure it has the appropriate permissions.
 # nginx_working_dir: /usr/local/kong/
 
-## yop-hessian的地址，默认http://yop.core.3g:8080/yop-hessian/
-yop_hessian_url: "http://172.17.102.173:8055/yop-hessian/"
+## yop-hessian的地址，默认http://yop.core.3g:8080/yop-hessian
+yop_hessian_url: "http://172.17.102.173:8055/yop-hessian"
 
-## yop-center，默认http://yop.center.3g/yop-center/
-yop_center_url: "http://172.17.102.173:8064/yop-center/"
+## yop-center，默认http://yop.center.3g/yop-center
+yop_center_url: "http://172.17.102.173:8064/yop-center"
 
 ## yop nginx本地缓存失效时间（秒），默认5分钟（300秒）
 yop_cache_expired_seconds: 10

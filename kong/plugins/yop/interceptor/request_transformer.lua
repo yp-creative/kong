@@ -9,11 +9,7 @@
 local ipairs, pairs, next, table, string = ipairs, pairs, next, table, string
 local setBodyData = ngx.req.set_body_data
 local setHeader = ngx.req.set_header
-local stringLen = string.len
 local json = require "cjson"
-local CONTENT_LENGTH = "content-length"
-local CONTENT_TYPE = "content-type"
-local APPLICATION_JSON = "application/json; charset=utf-8"
 
 local _M = {}
 
@@ -53,9 +49,11 @@ _M.process = function(ctx)
       local paramName, prefixes = endParamNamePair.paramName, endParamNamePair.prefixes
       if parameters[paramName] then
         local cursor = methodParameterI
+        -- eg:bancard.name.first prefixes=["bankcard","name","first"]
         for i = 1, #prefixes - 1, 1 do
-          if cursor[prefixes[i]] == nil then cursor[prefixes[i]] = {} end
-          cursor = cursor[prefixes[i]]
+          local prefix = prefixes[i]
+          if cursor[prefix] == nil then cursor[prefix] = {} end
+          cursor = cursor[prefix]
         end
         cursor[prefixes[#prefixes]] = parameters[paramName]
       end
@@ -67,8 +65,8 @@ _M.process = function(ctx)
   restfulPostJsonBody = json.encode(restfulPostJsonBody)
 
   setBodyData(restfulPostJsonBody)
-  setHeader(CONTENT_LENGTH, stringLen(restfulPostJsonBody))
-  setHeader(CONTENT_TYPE, APPLICATION_JSON)
+  setHeader("content-length", string.len(restfulPostJsonBody))
+  setHeader("content-type", "application/json; charset=utf-8")
 end
 
 return _M

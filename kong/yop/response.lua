@@ -1,5 +1,5 @@
 local responses = require "kong.tools.responses"
-local ngx, string, table = ngx, string, table
+local os, ngx, string, table = os, ngx, string, table
 
 local ErrorCode = {
   ['99001001'] = '应用(%s)无效或不存在,请确认appKey正确且应用状态正常',

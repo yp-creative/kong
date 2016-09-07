@@ -8,20 +8,7 @@
 local codec = require 'codec'
 local mcrypt = require 'mcrypt'
 
-local string, table = string, table
-
 local _M = {}
-
-function _M.blowfishDecrypt(body, secret)
-  local pwd = codec.md5_encode(secret)
-  local key = string.sub(pwd, 1, 16)
-  local iv = string.sub(pwd, 1, 8)
-  return mcrypt.bf_cfb_de(key, iv, codec.base64_decode(body))
-end
-
-function _M.aesDecryptWithKeyBase64(body, secret)
-  return codec.aes_decrypt(codec.base64_decode(body), codec.base64_decode(secret));
-end
 
 local SIGN_ALGS = {
   SHA1 = function(body) return codec.sha1_encode(body) end,
@@ -29,31 +16,32 @@ local SIGN_ALGS = {
   MD5 = function(body) return codec.md5_encode(body) end,
 }
 
-local function blowfishEncrypt(body, secret)
-  local pwd = codec.md5_encode(secret)
-  local key = string.sub(pwd, 1, 16)
-  local iv = string.sub(pwd, 1, 8)
-  return mcrypt.bf_cfb_en(key, iv, body)
-end
-
-local function aesEncryptWithKeyBase64(body, secret)
-  return codec.aes_encrypt(body, codec.base64_decode(secret));
-end
-
-function _M.signRawString(rawString, alg) return SIGN_ALGS[alg](rawString) end
-
-function _M.signResponse(r, appSecret, alg)
-  local result = ""
-  if r.state == "SUCCESS" then result = r.result end
-  r.sign = _M.signRawString(table.concat({ appSecret, r.state, result, r.ts, appSecret }), alg)
-end
-
-function _M.encryptResponse(r, keyStoreType, appSecret)
-  if (keyStoreType == "CUST_BASED") then
-    r.result = codec.base64_encode(blowfishEncrypt(r.result, appSecret))
-  else
-    r.result = codec.base64_encode(aesEncryptWithKeyBase64(r.result, appSecret))
+local DECRYPT_ALGS = {
+  DB_BASED = function(body, secret) return codec.aes_decrypt(codec.base64_decode(body), codec.base64_decode(secret)) end,
+  CUST_BASED = function(body, secret)
+    secret = codec.md5_encode(secret)
+    return mcrypt.bf_cfb_de(secret:sub(1, 16), secret:sub(1, 8), codec.base64_decode(body))
   end
+}
+
+local ENCRYPT_ALGS = {
+  DB_BASED = function(body, secret)
+    return codec.base64_encode(codec.aes_encrypt(body, codec.base64_decode(secret)))
+  end,
+  CUST_BASED = function(body, secret)
+    secret = codec.md5_encode(secret)
+    return codec.base64_encode(mcrypt.bf_cfb_en(secret:sub(1, 16), secret:sub(1, 8), body))
+  end
+}
+
+--解密请求
+function _M.decryptRequest(keyStoreType, body, secret)
+  return DECRYPT_ALGS[keyStoreType](body, secret)
 end
+
+--加密响应
+function _M.encryptResponse(keyStoreType, body, secret) return ENCRYPT_ALGS[keyStoreType](body, secret) end
+
+function _M.sign(alg, body) return SIGN_ALGS[alg](body) end
 
 return _M

@@ -9,73 +9,42 @@
 local response, _ = require 'kong.yop.response'()
 local security_center = require 'kong.yop.security_center'
 
-local table, string, pairs, ngx = table, string, pairs, ngx
+local table, pairs = table, pairs
 
-function table.containKey(t, key)
-  for _, v in pairs(t) do
-    if key == v then
-      return true
-    end
-  end
-  return false
-end
+local stringy = require "stringy"
 
-function string.trim(str)
-  str = string.gsub(str, "^[ \t\n\r]+", "")
-  return (string.gsub(str, "[ \t\n\r]+$", ""))
-end
+local _M = {}
+_M.process = function(ctx)
+  local parameters = ctx.parameters
+  local ignoreSignFields = ctx.ignoreSignFields
+  if not parameters.signRet then return end -- 客户端是否有过签名
+  local expectedSign, alg = parameters.sign, ctx.api.signAlg -- 签名摘要
 
-local function prepareSignParams(ctx)
-  local ignoreSignFieldNames = {}
-  table.insert(ignoreSignFieldNames, "sign")
-  table.insert(ignoreSignFieldNames, "encrypt")
-
-  local needSignKeys = {}
-  for key, _ in pairs(ctx.parameters) do
-    if not table.containKey(ignoreSignFieldNames, key) then
+  local needSignKeys = { "method", "v" }
+  for key, _ in pairs(parameters) do
+    if not ignoreSignFields[key] then
       -- 取出所有需要排序的key
       table.insert(needSignKeys, key)
     end
   end
 
-  -- rest接口URI参与签名
-  if string.sub(ctx.apiUri, 1, 6) == "/rest/" then
-    table.insert(needSignKeys, "method")
-    table.insert(needSignKeys, "v")
-    ctx.parameters["method"] = ctx.apiUri
-    local _, _, v = string.find(ctx.apiUri, "(v%d+%.?%d+)") -- 匹配出版本号  v1.1     v1    v1.1234    v12.1234
-    ctx.parameters["v"] = string.sub(v, 2)
-  end
-
   table.sort(needSignKeys)
-  return needSignKeys
-end
 
-local function prepareSignBody(ctx, needSignKeys)
-  local secret = ctx.app.appSecret
-  local signBody = secret
+  local signBody = ""
   for _, value in pairs(needSignKeys) do
-    signBody = signBody .. value .. string.trim(ctx.parameters[value])
+    if value == "method" then
+      signBody = table.concat({ signBody, value, ctx.apiUri })
+    elseif value == "v" then
+      signBody = table.concat({ signBody, value, ctx.api.apiVersion })
+    else
+      signBody = table.concat({ signBody, value, stringy.strip(ctx.parameters[value]) })
+    end
   end
-  return signBody .. secret
-end
+  local secret = ctx.app.appSecret
+  signBody = table.concat({ secret, signBody, secret })
 
-local _M = {}
-_M.process = function(ctx)
-  local parameters = ctx.parameters
-  local signRet = parameters.signRet -- 客户端是否有过签名
-  local sign = parameters.sign -- 签名摘要
-  local alg = ctx.api.signAlg -- 签名算法
-  if not signRet then
-    return
-  end
-  local needSignKeys = prepareSignParams(ctx)
-  local signBody = prepareSignBody(ctx, needSignKeys)
-  local encodeBody = security_center.signRawString(signBody, alg)
+  local actualSign = security_center.sign(alg, signBody)
 
-  if encodeBody ~= sign then
-    ngx.log(ngx.ERR, "验证签名失败!")
-    response.signException(ctx.appKey)
-  end
+  if actualSign ~= expectedSign then response.signException(ctx.appKey) end
 end
 return _M

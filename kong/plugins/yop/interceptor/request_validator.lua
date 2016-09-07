@@ -7,10 +7,8 @@
 -- To change this template use File | Settings | File Templates.
 --
 local response, _ = require "kong.yop.response"()
-local next = next
-local pairs = pairs
+local next, pairs, tonumber = next, pairs, tonumber
 local stringy = require "stringy"
-local tonumber = tonumber
 local ngxMatch = ngx.re.match
 local _M = {}
 
@@ -65,11 +63,9 @@ local validators = {
 
 _M.process = function(ctx)
   local validator = ctx.validator
-  local appKey = ctx.appKey
-  local parameters = ctx.parameters
-
   if validator == nil or next(validator) == nil then return end
 
+  local appKey, parameters = ctx.appKey, ctx.parameters
   for name, value in pairs(validator) do
     for validator, rule in pairs(value) do
       validators[validator]({ app = appKey, name = name, value = parameters[name] }, rule)
