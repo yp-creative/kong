@@ -2,7 +2,7 @@ version=0.0.1
 name=lua-mcrypt
 dist=$(name)-$(version)
 
-LUA_VERSION =   5.1
+LUAJIT_VERSION = 2.1
 
 TARGET = mcrypt.so
 OBJS   = mcrypt.o
@@ -10,6 +10,8 @@ OBJS   = mcrypt.o
 .PHONE: all clean dist test
 
 INSTALL ?= install
+DESTDIR ?= /usr/local/lib/luarocks/rocks/kong/0.8.3-0/lib
+
 RM = rm -f
 # CC=gcc
 
@@ -21,12 +23,12 @@ OMIT_FRAME_POINTER= -fomit-frame-pointer
 ## uncomment and change the following ones according to your building
 ## enviroment.
 
-PREFIX ?= /usr/local
-LUA_INCLUDE_DIR ?= $(PREFIX)/include
-LUA_LIB_DIR     ?= $(PREFIX)/lib/lua/$(LUA_VERSION)
+PREFIX ?= /usr/local/openresty/luajit
+LUA_INCLUDE_DIR ?= $(PREFIX)/include/luajit-$(LUAJIT_VERSION)
+LUA_LIB_DIR     ?= $(PREFIX)/lib
 CFLAGS=-O0 -fPIC -Wall -Werror -I$(LUA_INCLUDE_DIR)
 
-LDFLAGS=-shared -lmcrypt -lluajit $(OMIT_FRAME_POINTER)
+LDFLAGS=-shared -lmcrypt -lluajit-5.1 $(OMIT_FRAME_POINTER)
 
 ## Mac OS
 # LDFLAGS =-bundle -undefined dynamic_lookup -lmcrypt -lluajit
@@ -38,8 +40,8 @@ $(TARGET): $(OBJS)
 	$(CC) $(LDFLAGS) $< -o $@
 
 install: $(TARGET)
-	$(INSTALL) -d $(DESTDIR)/$(LUA_LIB_DIR)
-	$(INSTALL) $(TARGET) $(DESTDIR)/$(LUA_LIB_DIR)
+	$(INSTALL) -d $(DESTDIR)
+	$(INSTALL) $(TARGET) $(DESTDIR)
 
 clean:
 	$(RM) *.so *.o

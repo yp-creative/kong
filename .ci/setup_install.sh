@@ -8,7 +8,7 @@ if ["" -eq `which yum`]; then
     apt-get install vim git unzip gcc perl libpcre3 libpcre3-dev openssl libssl-dev libreadline-gplv2-dev libncurses5-dev uuid-dev build-essential luajit
 else
     # Fedora 和 RedHat 用户
-    sudo yum install -y pcre openssl readline-devel pcre-devel openssl-devel gcc libuuid libuuid-devel mcrypt
+    sudo yum install -y pcre openssl readline-devel pcre-devel openssl-devel gcc libuuid libuuid-devel mcrypt libmcrypt-devel
 fi
 
 # 2.下载dyups
@@ -16,13 +16,7 @@ fi
 cd /opt
 git clone git://github.com/yzprofile/ngx_http_dyups_module.git
 
-# 3.下载serf并解压至/usr/local/bin/
-
-wget https://releases.hashicorp.com/serf/0.7.0/serf_0.7.0_linux_amd64.zip
-unzip serf_0.7.0_linux_amd64.zip -d /usr/local/bin/
-
 # 4.下载并安装openresty
-
 # --prefix=/usr/local/openresty 程序会被安装到/usr/local/openresty目录
 
 wget http://openresty.org/download/ngx_openresty-1.9.15.1.tar.gz

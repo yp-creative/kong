@@ -493,7 +493,6 @@ static int codec_sha1_encode(lua_State *L)
  * local src = [[...]]
  * local result = codec.sha256_encode(src)
  */
-typedef unsigned char uchar;
 static int codec_sha256_encode(lua_State *L)
 {
   size_t len;
