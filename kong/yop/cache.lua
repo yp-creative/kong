@@ -6,12 +6,14 @@
 -- To change this template use File | Settings | File Templates.
 --
 local json = require "cjson"
-local dyups = require('ngx.dyups')
+local dyups = require "ngx.dyups"
 local singletons = require "kong.singletons"
 local cache = ngx.shared.yop
 local httpClient = require "kong.yop.http_client"
 local stringy = require "stringy"
 local ngx, table, pairs, ipairs, next, tostring, string = ngx, table, pairs, ipairs, next, tostring, string
+local resty_lock = require "resty.lock"
+
 
 local url, expireTime = singletons.configuration["yop_hessian_url"], singletons.configuration["yop_cache_expired_seconds"]
 if stringy.endswith(url, "/") then url = url:sub(1, #url - 1) end
@@ -51,18 +53,31 @@ function _M.delete_all()
 end
 
 function _M.get_or_set(original_key, key, cb)
-  local value, err
-  -- Try to get
+  local value = _M.get(key)
+  if value then return value end
+
+  local lock, err = resty_lock:new("cache_locks", {
+    exptime = 10,
+    timeout = 5
+  })
+  if not lock then ngx.log(ngx.ERR, "could not create lock: ", err) return end
+
+  local elapsed, err = lock:lock(key)
+  if not elapsed then ngx.log(ngx.ERR, "failed to acquire cache lock: ", err) end
+
   value = _M.get(key)
+
   if not value then
     -- Get from closure
-    value, err = cb(original_key)
-    if err then return nil, err
-    elseif value then
+    value = cb(original_key)
+    if value then
       local ok, err = _M.set(key, value)
       if not ok then ngx.log(ngx.ERR, err) end
     end
   end
+
+  local ok, err = lock:unlock()
+  if not ok and err then ngx.log(ngx.ERR, "failed to unlock: ", err) end
   return value
 end
 

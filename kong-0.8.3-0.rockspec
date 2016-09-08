@@ -76,7 +76,6 @@ build = {
 
     ["kong.tools.io"] = "kong/tools/io.lua",
     ["kong.tools.utils"] = "kong/tools/utils.lua",
-    ["kong.tools.ngx_stub"] = "kong/tools/ngx_stub.lua",
     ["kong.tools.printable"] = "kong/tools/printable.lua",
     ["kong.tools.responses"] = "kong/tools/responses.lua",
     ["kong.tools.timestamp"] = "kong/tools/timestamp.lua",

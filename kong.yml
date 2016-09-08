@@ -81,7 +81,7 @@ admin_api_listen: "0.0.0.0:7778"
 ## needs to be as big as the size of the entities being used by Kong at any given time. The default value
 ## is `128`, and the potential maximum value is the total size of the datastore.
 ## This value may not be smaller than 32MB.
-# memory_cache_size: 128
+memory_cache_size: 128
 
 ######
 ## The NGINX configuration (or `nginx.conf`) that will be used for this instance.
@@ -145,11 +145,8 @@ nginx: |
     lua_code_cache on;
     lua_max_running_timers 4096;
     lua_max_pending_timers 16384;
-    lua_shared_dict reports_locks 100k;
-    lua_shared_dict cluster_locks 100k;
-    lua_shared_dict cluster_autojoin_locks 100k;
-    lua_shared_dict cache {{memory_cache_size}}m;
-    lua_shared_dict yop 50m;
+    lua_shared_dict cache_locks 100k;
+    lua_shared_dict yop {{memory_cache_size}}m;
     lua_socket_log_errors off;
     {{lua_ssl_trusted_certificate}}
 
