@@ -194,6 +194,13 @@ $ cd kong/
 # You might want to switch to the development branch. See CONTRIBUTING.md for more infos
 $ git checkout next
 
+# Get submodule
+git submodule update --init --recursive
+
+# Or do this when you get something error with above command
+git submodule sync --recursive
+git submodule update --recursive
+
 # Install latest Kong globally using Luarocks, overriding the version previously installed
 $ make install
 ```
