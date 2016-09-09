@@ -24,10 +24,10 @@ end
 _M.process = function(ctx)
   local api = ctx.api
   for _, upstream in ipairs(ctx.upstreams) do
-    if upstream.immutable then buildUpstream(upstream, api) ngx.log(ngx.NOTICE,"upstream "..upstream.name.." is selected") return end
+    if upstream.immutable then buildUpstream(upstream, api) return end
 
     local rule = upstream.routeRule
-    if route[rule.ruleType](rule, ctx) then buildUpstream(upstream, api) ngx.log(ngx.NOTICE,"upstream "..upstream.name.." is selected") return end
+    if route[rule.ruleType](rule, ctx) then buildUpstream(upstream, api) return end
   end
 end
 
