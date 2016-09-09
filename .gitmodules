@@ -1,0 +1,6 @@
+[submodule "libs/mcrypt"]
+	path = libs/mcrypt
+	url = https://github.com/yp-creative/yop-nginx-mcrypt.git
+[submodule "libs/codec"]
+	path = libs/codec
+	url = https://github.com/yp-creative/yop-nginx-codec.git
