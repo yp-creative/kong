@@ -12,11 +12,11 @@
 ## Make sure it has the appropriate permissions.
 # nginx_working_dir: /usr/local/kong/
 
-## yop-hessian的地址，默认http://yop.core.3g:8080/yop-hessian/
-yop_hessian_url: "http://172.17.102.173:8055/yop-hessian/"
+## yop-hessian的地址，默认http://yop.core.3g:8080/yop-hessian
+yop_hessian_url: "http://172.17.102.173:8055/yop-hessian"
 
-## yop-center，默认http://yop.center.3g/yop-center/
-yop_center_url: "http://172.17.102.173:8064/yop-center/"
+## yop-center，默认http://yop.center.3g/yop-center
+yop_center_url: "http://172.17.102.173:8064/yop-center"
 
 ## yop nginx本地缓存失效时间（秒），默认5分钟（300秒）
 yop_cache_expired_seconds: 10
@@ -81,7 +81,7 @@ admin_api_listen: "0.0.0.0:7778"
 ## needs to be as big as the size of the entities being used by Kong at any given time. The default value
 ## is `128`, and the potential maximum value is the total size of the datastore.
 ## This value may not be smaller than 32MB.
-# memory_cache_size: 128
+memory_cache_size: 128
 
 ######
 ## The NGINX configuration (or `nginx.conf`) that will be used for this instance.
@@ -142,14 +142,11 @@ nginx: |
     # Lua Settings
     lua_package_path '/Users/zhangwenkang/Documents/ideaworkspace/yop-nginx/kong/?.lua;;;';
     lua_package_cpath '/usr/local/lib/luarocks/rocks/kong/0.8.3-0/lib/?.so;./?.so;;';
-    lua_code_cache off;
+    lua_code_cache on;
     lua_max_running_timers 4096;
     lua_max_pending_timers 16384;
-    lua_shared_dict reports_locks 100k;
-    lua_shared_dict cluster_locks 100k;
-    lua_shared_dict cluster_autojoin_locks 100k;
-    lua_shared_dict cache {{memory_cache_size}}m;
-    lua_shared_dict yop 50m;
+    lua_shared_dict cache_locks 100k;
+    lua_shared_dict yop {{memory_cache_size}}m;
     lua_socket_log_errors off;
     {{lua_ssl_trusted_certificate}}
 
@@ -166,10 +163,6 @@ nginx: |
       server_name yop-center;
       listen {{proxy_listen}};
       listen {{proxy_listen_ssl}} ssl;
-
-      ssl_certificate_by_lua_block {
-        kong.ssl_certificate()
-      }
 
       ssl_certificate {{ssl_cert}};
       ssl_certificate_key {{ssl_key}};

@@ -11,7 +11,6 @@ _M.STATUSES = {
 
 -- Services ordered by priority
 local services = {
---  require "kong.cli.services.serf",
   require "kong.cli.services.nginx"
 }
 

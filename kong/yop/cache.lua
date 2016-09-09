@@ -6,20 +6,24 @@
 -- To change this template use File | Settings | File Templates.
 --
 local json = require "cjson"
-local dyups = require('ngx.dyups')
+local dyups = require "ngx.dyups"
 local singletons = require "kong.singletons"
 local cache = ngx.shared.yop
 local httpClient = require "kong.yop.http_client"
 local stringy = require "stringy"
 local ngx, table, pairs, ipairs, next, tostring, string = ngx, table, pairs, ipairs, next, tostring, string
+local resty_lock = require "resty.lock"
+
 
 local url, expireTime = singletons.configuration["yop_hessian_url"], singletons.configuration["yop_cache_expired_seconds"]
+if stringy.endswith(url, "/") then url = url:sub(1, #url - 1) end
 
 local CACHE_KEYS = {
   API = "api:",
   APP = "app:",
   TRANSFORMER = "tf:",
   VALIDATOR = "va:",
+  IGNORE_SIGN_FIELDS = "isf:",
   WHITELIST = "wl:",
   APP_AUTH = "auth:",
   DEFAULT_VALUES = "dv:",
@@ -29,18 +33,11 @@ local CACHE_KEYS = {
 
 local _M = {}
 
-function _M.rawset(key, value)
-  return cache:set(key, value, expireTime)
-end
+function _M.rawset(key, value) return cache:set(key, value, expireTime) end
 
-function _M.set(key, value)
-  if value then value = json.encode(value) end
-  return _M.rawset(key, value)
-end
+function _M.set(key, value) if value then value = json.encode(value) end return _M.rawset(key, value) end
 
-function _M.rawget(key)
-  return cache:get(key)
-end
+function _M.rawget(key) return cache:get(key) end
 
 function _M.get(key)
   local value, flags = _M.rawget(key)
@@ -56,178 +53,140 @@ function _M.delete_all()
 end
 
 function _M.get_or_set(original_key, key, cb)
-  local value, err
-  -- Try to get
+  local value = _M.get(key)
+  if value then return value end
+
+  local lock, err = resty_lock:new("cache_locks", {
+    exptime = 10,
+    timeout = 5
+  })
+  if not lock then ngx.log(ngx.ERR, "could not create lock: ", err) return end
+
+  local elapsed, err = lock:lock(key)
+  if not elapsed then ngx.log(ngx.ERR, "failed to acquire cache lock: ", err) end
+
   value = _M.get(key)
+
   if not value then
     -- Get from closure
-    value, err = cb(original_key)
-    if err then
-      return nil, err
-    elseif value then
+    value = cb(original_key)
+    if value then
       local ok, err = _M.set(key, value)
-      if not ok then
-        ngx.log(ngx.ERR, err)
-      end
+      if not ok then ngx.log(ngx.ERR, err) end
     end
   end
+
+  local ok, err = lock:unlock()
+  if not ok and err then ngx.log(ngx.ERR, "failed to unlock: ", err) end
   return value
 end
 
-local function isEmptyTable(t)
-  return next(t) == nil
-end
-
-local function remoteGetApi(api)
-  ngx.log(ngx.NOTICE, "remote get api info...appKey:" .. api)
-  local j = httpClient.post(url .. "/api", { apiUri = api, type = "basic" }, { ['accept'] = "application/json" })
-  local o = json.decode(j)
-  if isEmptyTable(o) then return nil end
-
-  local endClass, endMethod = o.endClass, o.endMethod
-
-  local i = endClass:find(".[^.]*$")
-  o.bareClass = endClass:sub(i + 1)
-
-  i = endMethod:find("%(")
-  endMethod = endMethod:sub(1, i - 1)
-  endMethod = endMethod:gsub("void ", "")
-  o.bareMethod = stringy.strip(endMethod)
-  return o
-end
-
-local function remoteGetApp(appKey)
-  ngx.log(ngx.NOTICE, "remote get app info...appKey:" .. appKey)
-  local j = httpClient.post(url .. "/app", { appKey = appKey }, { ['accept'] = "application/json" })
-  local o = json.decode(j)
-  if isEmptyTable(o) then return nil end
-  return o
-end
-
-local function remoteGetAppAuth(appKey)
-  ngx.log(ngx.NOTICE, "remote get app auth info...appKey:" .. appKey)
-  local j = httpClient.post(url .. "/auth", { appKey = appKey }, { ['accept'] = "application/json" })
-  local o = json.decode(j)
-  if isEmptyTable(o) then return {} end
-
-  local auth = {}
-  for _, value in pairs(o) do
-    auth[tostring(value.apiId)] = true
-  end
-  return auth
-end
-
-local function remoteGetTransformer(api)
-  ngx.log(ngx.NOTICE, "remote get api transformer info...api:" .. api)
-  local j = httpClient.post(url .. "/api", { apiUri = api, type = "param" }, { ['accept'] = "application/json" })
-  local o = json.decode(j)
-
-  local transformer = {}
-  for _, value in pairs(o) do
-    local ei = value.endParamIndex
-    if ei >= #transformer then for k = #transformer, ei, 1 do table.insert(transformer, {}) end end
-    local paramName = value.paramName
-    local endParamName = value.endParamName
-    if endParamName == nil or stringy.strip(endParamName) == '' then endParamName = paramName end
-    transformer[ei + 1][endParamName] = paramName
-  end
-  return transformer
-end
-
-local function remoteGetDefaultValues(api)
-  ngx.log(ngx.NOTICE, "remote get api default values info...api:" .. api)
-  local j = httpClient.post(url .. "/api", { apiUri = api, type = "param" }, { ['accept'] = "application/json" })
-  local o = json.decode(j)
-
-  local defaultValues = {}
-  for _, value in pairs(o) do
-    local defaultValue = value.defaultValue
-    if defaultValue ~= nil then
-      defaultValues[value.paramName] = defaultValue
-    end
-  end
-  return defaultValues
-end
-
-local function remoteGetValidator(api)
-  ngx.log(ngx.NOTICE, "remote get api validator info...api:" .. api)
-  local j = httpClient.post(url .. "/api", { apiUri = api, type = "validator" }, { ['accept'] = "application/json" })
+local function post(path, param)
+  local j = httpClient.post(url .. "/" .. path, param, { ['accept'] = "application/json" })
   return json.decode(j)
 end
 
-local function remoteGetIPWhitelist(api)
-  ngx.log(ngx.NOTICE, "remote get api whitelist info...api:" .. api)
-  local j = httpClient.post(url .. "/limit", { apiUri = api }, { ['accept'] = "application/json" })
-  local o = json.decode(j)
-  if isEmptyTable(o) then return {} end
-
-  local whitelist = {}
-  for _, value in pairs(o) do
-    if value.limitType == 'WHITELIST' and value.status == 'ENABLE' then
-      local whitelists = value.whitelist
-      for _, w in pairs(whitelists) do
-        whitelist[w] = true
-      end
-    end
-  end
-  return whitelist
-end
-
-local function generateNginxUpstreamServers(servers)
-  if servers == nil or isEmptyTable(servers) then return nil end
-  return "server " .. table.concat(servers, ";\nserver ") .. ";"
-end
-
-local function remoteGetUpstream(backendApp)
-  ngx.log(ngx.NOTICE, "remote get backend app info...backendApp:" .. backendApp)
-  local j = httpClient.post(url .. "/upstream", { backendApp = backendApp }, { ['accept'] = "application/json" })
-  local o = json.decode(j)
-  if isEmptyTable(o) then return {} end
-
-  for _, value in ipairs(o) do
-    local name = value.name
-    local servers = generateNginxUpstreamServers(value.servers)
-    ngx.log(ngx.NOTICE, string.format('dyups.update(%s, "%s")', name, servers))
-    local status, rv = dyups.update(name, servers)
-    if status ~= 200 then
-      ngx.log(ngx.ALERT, string.format('dyups.update(%s, "%s") failed: %s', name, servers, tostring(rv)))
-      return nil
-    end
-  end
-
-  return o
-end
-
 function _M.cacheApi(api)
-  return _M.get_or_set(api, CACHE_KEYS.API .. api, remoteGetApi)
+  return _M.get_or_set(api, CACHE_KEYS.API .. api, function(api)
+    ngx.log(ngx.NOTICE, "remote get api info...api:" .. api)
+    local o = post("api", { apiUri = api })
+    if not next(o) then return {} end
+
+    --  api basic info
+    local basic = o.basic
+    local endClass, endMethod = basic.endClass, basic.endMethod
+
+    local i = endClass:find("%.[^.]*$")
+    if i then endClass = endClass:sub(i + 1) end
+    basic.bareClass = endClass
+
+    i = endMethod:find("%(")
+    if i then endMethod = endMethod:sub(1, i - 1) end
+    endMethod = endMethod:gsub("void ", "")
+    basic.bareMethod = stringy.strip(endMethod)
+
+    local params = o.params
+    local transformer, defaultValues, ignoreSignFields = {}, {}, { sign = true, encrypt = true }
+    for _, value in pairs(params) do
+      local ei, paramName, endParamName, defaultValue = value.endParamIndex, value.paramName, value.endParamName, value.defaultValue
+      if ei >= #transformer then for k = #transformer, ei, 1 do table.insert(transformer, {}) end end
+      if endParamName == nil or stringy.strip(endParamName) == '' then endParamName = paramName end
+      --    transformer info
+      transformer[ei + 1][endParamName] = { paramName = paramName, prefixes = stringy.split(endParamName, ".") }
+
+      --    default value info
+      if defaultValue ~= nil then defaultValues[paramName] = defaultValue end
+
+      --ignore sign?
+      if value.ignoreSign then ignoreSignFields[paramName] = true end
+    end
+    _M.set(CACHE_KEYS.TRANSFORMER .. api, transformer)
+    _M.set(CACHE_KEYS.DEFAULT_VALUES .. api, defaultValues)
+    _M.set(CACHE_KEYS.VALIDATOR .. api, o.validators)
+    _M.set(CACHE_KEYS.IGNORE_SIGN_FIELDS .. api, ignoreSignFields)
+    return basic
+  end)
 end
 
-function _M.cacheApp(app)
-  return _M.get_or_set(app, CACHE_KEYS.APP .. app, remoteGetApp)
-end
+function _M.getTransformer(api) return _M.get(CACHE_KEYS.TRANSFORMER .. api) end
 
-function _M.cacheTransformer(api)
-  return _M.get_or_set(api, CACHE_KEYS.TRANSFORMER .. api, remoteGetTransformer)
-end
+function _M.getValidator(api) return _M.get(CACHE_KEYS.VALIDATOR .. api) end
 
-function _M.cacheValidator(api)
-  return _M.get_or_set(api, CACHE_KEYS.VALIDATOR .. api, remoteGetValidator)
-end
+function _M.getDefaultValues(apiUri) return _M.get(CACHE_KEYS.DEFAULT_VALUES .. apiUri) end
+
+function _M.getIgnoreSignFields(api) return _M.get(CACHE_KEYS.IGNORE_SIGN_FIELDS .. api) end
 
 function _M.cacheIPWhitelist(api)
-  return _M.get_or_set(api, CACHE_KEYS.WHITELIST .. api, remoteGetIPWhitelist)
+  return _M.get_or_set(api, CACHE_KEYS.WHITELIST .. api, function(api)
+    ngx.log(ngx.NOTICE, "remote get api whitelist info...api:" .. api)
+    local o = post("limit", { apiUri = api })
+    if not next(o) then return {} end
+    local whitelist = {}
+    for _, value in pairs(o) do
+      if value.limitType == 'WHITELIST' and value.status == 'ENABLE' then
+        for _, w in pairs(value.whitelist) do whitelist[w] = true end
+      end
+    end
+    return whitelist
+  end)
 end
+
+
+function _M.cacheApp(app)
+  return _M.get_or_set(app, CACHE_KEYS.APP .. app, function(appKey)
+    ngx.log(ngx.NOTICE, "remote get app info...appKey:" .. appKey)
+    return post("app", { appKey = appKey })
+  end)
+end
+
 
 function _M.cacheAppAuth(appKey)
-  return _M.get_or_set(appKey, CACHE_KEYS.APP_AUTH .. appKey, remoteGetAppAuth)
+  return _M.get_or_set(appKey, CACHE_KEYS.APP_AUTH .. appKey, function(appKey)
+    ngx.log(ngx.NOTICE, "remote get app auth info...appKey:" .. appKey)
+    local o = post("auth", { appKey = appKey })
+    if not next(o) then return {} end
+
+    local auth = {}
+    for _, value in pairs(o) do auth[tostring(value.apiId)] = true end
+    return auth
+  end)
 end
 
-function _M.cacheDefaultValues(apiUri)
-  return _M.get_or_set(apiUri, CACHE_KEYS.DEFAULT_VALUES .. apiUri, remoteGetDefaultValues)
-end
 
 function _M.cacheUpstream(backendApp)
-  return _M.get_or_set(backendApp, CACHE_KEYS.UPSTREAM .. backendApp, remoteGetUpstream)
+  return _M.get_or_set(backendApp, CACHE_KEYS.UPSTREAM .. backendApp, function(backendApp)
+    ngx.log(ngx.NOTICE, "remote get backend app info...backendApp:" .. backendApp)
+    local o = post("upstream", { backendApp = backendApp })
+    if not next(o) then return {} end
+    for _, value in ipairs(o) do
+      local name = value.name
+      local servers = "server " .. table.concat(value.servers, ";\nserver ") .. ";"
+      ngx.log(ngx.NOTICE, string.format('dyups.update(%s, "%s")', name, servers))
+      local status, rv = dyups.update(name, servers)
+      if status ~= 200 then ngx.log(ngx.ALERT, string.format('dyups.update(%s, "%s") failed: %s', name, servers, tostring(rv))) return nil end
+    end
+    return o
+  end)
 end
 
 return _M

@@ -1,7 +1,7 @@
 local singletons = require "kong.singletons"
 local stringy = require "stringy"
 local utils = require "kong.tools.utils"
-local cache = require "kong.tools.database_cache"
+local cache = require "kong.yop.cache"
 local responses = require "kong.tools.responses"
 local constants = require "kong.constants"
 local timestamp = require "kong.tools.timestamp"
