@@ -2,8 +2,7 @@ package = "kong"
 version = "0.8.3-0"
 supported_platforms = {"linux", "macosx"}
 source = {
-  url = "git://github.com/yp-creative/kong",
-  branch = "develop"
+  url = "yop-nginx"
 }
 description = {
   summary = "Kong is a scalable and customizable API Management Layer built on top of Nginx.",
@@ -12,7 +11,6 @@ description = {
 }
 dependencies = {
   "luasec ~> 0.5-2",
-
   "penlight ~> 1.3.2",
   "lua-resty-http ~> 0.07-0",
   "lua_uuid ~> 0.2.0-2",
