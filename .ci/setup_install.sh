@@ -75,15 +75,15 @@ make -j2 && make build && make install || checkStepStatus
 step="download and install kong"
 echo "5.$step"
 cd "$YOP_NGINX_INSTALL_DIR"
-git clone http://wenkang.zhang:Janeeyre1991@172.17.103.2/git/yop-nginx && cd yop-nginx && git checkout develop && cd .. && /usr/local/bin/luarocks install yop-nginx/kong-0.8.3-0.rockspec || checkStepStatus
+git clone https://github.com/yp-creative/kong.git && cd kong && git checkout develop && cd .. && /usr/local/bin/luarocks install kong/kong-0.8.3-0.rockspec || checkStepStatus
 
 # ==================================================================
 
 step="download and install codec"
 echo "6.$step"
 cd "$YOP_NGINX_INSTALL_DIR"
-git clone https://github.com/yp-creative/yop-nginx-codec.git
-cd yop-nginx-codec
+git clone https://github.com/yp-creative/lua-codec.git
+cd lua-codec/src
 make && make install || checkStepStatus
 
 # ==================================================================
@@ -91,8 +91,8 @@ make && make install || checkStepStatus
 step="download and install mcrypt"
 echo "7.$step"
 cd "$YOP_NGINX_INSTALL_DIR"
-git clone https://github.com/yp-creative/yop-nginx-mcrypt.git
-cd yop-nginx-mcrypt
+git clone https://github.com/yp-creative/lua-mcrypt.git
+cd lua-mcrypt
 make && make install || checkStepStatus
 
 # ==================================================================
