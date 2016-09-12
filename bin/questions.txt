@@ -1,0 +1,30 @@
+1.lua和luajit关系？
+
+2.协程与线程区别？
+
+3.如何在server范围内共享变量？
+
+4.如何在worker process范围内共享变量？
+
+5.如何在request范围内共享变量？
+
+6.配置文件中的lua_code_cache这个配置是什么意思?
+
+7.我有一段逻辑，想在每个work process启动的时候执行，该怎么做？
+
+8.配置文件中的lua_package_path和lua_package_cpath分别是干什么用的？
+
+9.为什么cache的value需要用json进行编码？nginx
+
+10.ngx.var和ngx.ctx有什么区别？
+
+11.nginx所支持的最大的请求并发数怎么计算？如何修改？
+
+12.body_filter为什么会被nginx多次回调？
+
+13.如何理解openresty中的同步非阻塞调用？为什么不应该使用lua自带的socket.http而应该使用resty.http?
+
+
+－－－－－－－－－－－－－－－－
+nginx文档：http://nginx.org/en/docs/
+openresty文档：https://github.com/openresty/lua-nginx-module
