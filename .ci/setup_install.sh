@@ -84,7 +84,7 @@ echo "6.$step"
 cd "$YOP_NGINX_INSTALL_DIR"
 git clone https://github.com/yp-creative/yop-nginx-codec.git
 cd yop-nginx-codec
-make && make install || checkStepStatus
+make && make install DESTDIR="/usr/local/kong/lib" || checkStepStatus
 
 # ==================================================================
 
@@ -93,7 +93,7 @@ echo "7.$step"
 cd "$YOP_NGINX_INSTALL_DIR"
 git clone https://github.com/yp-creative/yop-nginx-mcrypt.git
 cd yop-nginx-mcrypt
-make && make install || checkStepStatus
+make && make install DESTDIR="/usr/local/kong/lib" || checkStepStatus
 
 # ==================================================================
 
