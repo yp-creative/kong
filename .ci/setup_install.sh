@@ -18,9 +18,8 @@ YOP_NGINX_INSTALL_DIR=`pwd`
 echo "1.$step"
 if ["" -eq `which yum`]; then
     # Debian 和 Ubuntu 用户
-    # apt-get update & apt-get upgrade
-    # apt-get install vim git unzip gcc perl libpcre3 libpcre3-dev openssl libssl-dev libreadline-gplv2-dev libncurses5-dev uuid-dev build-essential luajit
-    echo "pretend to $step"
+    apt-get update & apt-get upgrade
+    apt-get install vim git unzip gcc perl libpcre3 libpcre3-dev openssl libssl-dev libreadline-gplv2-dev libncurses5-dev uuid-dev build-essential luajit
 else
     # Fedora 和 RedHat 用户
     yum install -y pcre openssl readline-devel pcre-devel openssl-devel gcc libuuid libuuid-devel mcrypt libmcrypt-devel

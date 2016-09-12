@@ -119,7 +119,6 @@ build = {
     ["kong.plugins.syslog.schema"] = "kong/plugins/syslog/schema.lua",
 
     ["kong.yop.cache"] = "kong/yop/cache.lua",
-    ["kong.yop.http_client"] = "kong/yop/http_client.lua",
     ["kong.yop.response"] = "kong/yop/response.lua",
     ["kong.yop.dkjson"] = "kong/yop/dkjson.lua",
     ["kong.yop.security_center"] = "kong/yop/security_center.lua",

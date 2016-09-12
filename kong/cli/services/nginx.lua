@@ -78,7 +78,7 @@ local function prepare_nginx_configuration(configuration, ssl_config)
     proxy_listen = configuration.proxy_listen,
     proxy_listen_ssl = configuration.proxy_listen_ssl,
     admin_api_listen = configuration.admin_api_listen,
---    dns_resolver = configuration.dns_resolver.address,
+    dns_resolver = configuration.dns_resolver,
     memory_cache_size = configuration.memory_cache_size,
     ssl_cert = ssl_config.ssl_cert_path,
     ssl_key = ssl_config.ssl_key_path,

@@ -9,10 +9,11 @@ local json = require "cjson"
 local dyups = require "ngx.dyups"
 local singletons = require "kong.singletons"
 local cache = ngx.shared.yop
-local httpClient = require "kong.yop.http_client"
 local stringy = require "stringy"
 local ngx, table, pairs, ipairs, next, tostring, string = ngx, table, pairs, ipairs, next, tostring, string
 local resty_lock = require "resty.lock"
+local http = require "resty.http"
+local uriEncode = ngx.encode_args
 
 
 local url, expireTime = singletons.configuration["yop_hessian_url"], singletons.configuration["yop_cache_expired_seconds"]
@@ -82,8 +83,17 @@ function _M.get_or_set(original_key, key, cb)
 end
 
 local function post(path, param)
-  local j = httpClient.post(url .. "/" .. path, param, { ['accept'] = "application/json" })
-  return json.decode(j)
+  local httpc = http.new()
+  local res, err = httpc:request_uri(url .. "/" .. path, {
+    method = "POST",
+    body = uriEncode(param),
+    headers = {
+      ['accept'] = "application/json",
+      ["Content-Type"] = "application/x-www-form-urlencoded"
+    }
+  })
+  if not res then ngx.log(ngx.NOTICE, "failed to request: ", err) return {} end
+  return json.decode(res.body)
 end
 
 function _M.cacheApi(api)

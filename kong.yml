@@ -18,6 +18,9 @@ yop_hessian_url: "http://172.17.102.173:8055/yop-hessian"
 ## yop-center，默认http://yop.center.3g/yop-center
 yop_center_url: "http://172.17.102.173:8064/yop-center"
 
+## dns服务器，主要用于解析上面两个域名：yop_hessian_url和yop_center_url
+dns_resolver: "172.17.102.171"
+
 ## yop nginx本地缓存失效时间（秒），默认5分钟（300秒）
 yop_cache_expired_seconds: 10
 
@@ -106,6 +109,7 @@ nginx: |
   }
 
   http {
+    resolver {{dns_resolver}};
     charset UTF-8;
 
     access_log logs/access.log;
@@ -160,7 +164,7 @@ nginx: |
     }
 
     server {
-      server_name yop-center;
+      server_name _;
       listen {{proxy_listen}};
       listen {{proxy_listen_ssl}} ssl;
 
