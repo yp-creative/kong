@@ -144,7 +144,7 @@ nginx: |
     ################################################
 
     # Lua Settings
-    lua_package_path '/Users/zhangwenkang/Documents/ideaworkspace/yop-nginx/kong/?.lua;;;';
+    lua_package_path '/Users/zhangwenkang/Documents/ideaworkspace/kong/kong/?.lua;;;';
     lua_package_cpath '/usr/local/kong/lib/?.so;./?.so;;';
     lua_code_cache on;
     lua_max_running_timers 4096;
