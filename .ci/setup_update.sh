@@ -13,7 +13,7 @@ if [ "" == "$1" ]; then
     exit 1
 fi
 
-cd yop-nginx
+cd kong
 
-git checkout "$1" && cd .. && /usr/local/bin/luarocks install yop-nginx/kong-0.8.3-0.rockspec &&
+git checkout "$1" && cd .. && /usr/local/bin/luarocks install kong/kong-0.8.3-0.rockspec &&
 echo "update lua module to tag:$1 success! " && echo "Please run 'kong restart -c <configuration>' to apply them."
