@@ -6,6 +6,8 @@
 -- Time: 下午12:18
 -- To change this template use File | Settings | File Templates.
 --
+local readRequestBody = ngx.req.read_body
+local getRequestBody = ngx.req.get_body_data
 local ngxDecodeArgs = ngx.decode_args
 
 local getRequestMethod = ngx.req.get_method
@@ -18,6 +20,7 @@ local stringy = require "stringy"
 local next = next
 local ngx = ngx
 local ngxVar = ngx.var
+local decodeOnceToString = ngx.unescape_uri
 
 local _M = {}
 
@@ -27,6 +30,10 @@ if stringy.endswith(YOP_CENTER_URL, "/") then YOP_CENTER_URL = YOP_CENTER_URL:su
 
 local function decodeOnceToTable(body) if body then return ngxDecodeArgs(body) end return {} end
 
+local getOriginalParameters = {
+  GET = function() return ngxVar.args end,
+  POST = function() readRequestBody() return getRequestBody() end
+}
 
 _M.process = function(ctx)
   local apiUri = ngxVar.uri:sub(PREFIX_LENGTH)
@@ -41,16 +48,20 @@ _M.process = function(ctx)
   --  如果是未迁移api，直接转发至yop-center
   if api.fork == "YOP_CENTER" then ctx.nginx, ngx.ctx.skipBodyFilter, ngx.ctx.upstream_url = false, true, YOP_CENTER_URL .. apiUri return end
 
+  --  TODO 数据库TBL_YOP_API_DEFINE表加个字段,认证模式 authMode
+  --  认证方式不是 appKey+appSecret 认证,直接跳过该插件
+--  if api.authMode == "YOP-AUTH" then ngx.ctx.authMode = api.authMode return end;
+
   local method = getRequestMethod()
 
-  --请求参数
-  ctx.parameters = ngx.ctx.parameters
+  --  parameters需要做2次urldecode
+  local parameters = decodeOnceToTable(decodeOnceToString(getOriginalParameters[method]()))
 
   local appKey
-  if ctx.parameters.appKey then
-    appKey, ctx.keyStoreType = ctx.parameters.appKey, 'DB_BASED'
+  if parameters.appKey then
+    appKey, ctx.keyStoreType = parameters.appKey, 'DB_BASED'
   else
-    appKey, ctx.keyStoreType = ctx.parameters.customerNo, "CUST_BASED"
+    appKey, ctx.keyStoreType = parameters.customerNo, "CUST_BASED"
   end
   --  缺少appKey参数
   if appKey == nil then response.missParameterException("", "appKey") end
@@ -67,27 +78,21 @@ _M.process = function(ctx)
   ctx.api, ctx.app = api, app
   --http请求方法，GET/POST
   ctx.method = method
+  --请求参数
+  ngx.ctx.parameters = parameters
 
-  --请求ip
-  ctx.ip = ngxVar.remote_addr
-
-  --参数转换
-  ctx.transformer = cache.getTransformer(apiUri)
-  --参数校验
-  ctx.validator = cache.getValidator(apiUri)
-  --  参数默认值
-  ctx.defaultValues = cache.getDefaultValues(apiUri)
   --忽略签名字段
   ctx.ignoreSignFields = cache.getIgnoreSignFields(apiUri)
 
-  --  ip白名单
-  ctx.whitelist = cache.cacheIPWhitelist(apiUri)
-  --  授权信息
-  ctx.auth = cache.cacheAppAuth(appKey)
 
-  --负载均衡信息
-  ctx.upstreams = cache.cacheUpstream(api.backendApp)
-
+  --保存于ngx上下文中的信息，用于对结果进行加密签名处理
+  --ngx.ctx中的信息生命周期为单个request，但使用代价较高
+  if parameters.encrypt then
+    --    是否加密，以及加密算法的选择
+    ngx.ctx.encrypt, ngx.ctx.keyStoreType = true, ctx.keyStoreType
+  end
+  ngx.ctx.signAlg = api.signAlg
+  ngx.ctx.appSecret = app.appSecret -- 将 appSercet 作为全局变量放在ngx.ctx里面,供转发后返回加密和签名使用/
 end
 
 return _M

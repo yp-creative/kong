@@ -132,6 +132,19 @@ build = {
     ["kong.plugins.yop.interceptor.yop_request_id"] = "kong/plugins/yop/interceptor/yop_request_id.lua",
     ["kong.plugins.yop.handler"] = "kong/plugins/yop/handler.lua",
     ["kong.plugins.yop.schema"] = "kong/plugins/yop/schema.lua"
+
+
+    ["kong.plugins.yop-auth.handler"] = "kong/plugins/yop-auth/handler.lua",
+    ["kong.plugins.yop-auth.schema"] = "kong/plugins/yop-auth/schema.lua",
+    ["kong.plugins.yop-auth.interceptor.decrypt"] = "kong/plugins/yop-auth/interceptor/decrypt.lua",
+    ["kong.plugins.yop-auth.interceptor.validate_sign"] = "kong/plugins/yop-auth/interceptor/validate_sign.lua",
+    ["kong.plugins.yop-auth.interceptor.initialize_ctx"] = "kong/plugins/yop-auth/interceptor/initialize_ctx.lua",
+
+
+
+
+
+    ["kong.yop.luaTableDump"] = "kong/yop/luaTableDump.lua"
   },
   install = {
     conf = { "kong.yml" },

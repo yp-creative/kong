@@ -65,6 +65,10 @@ function Kong.init()
     singletons.configuration = config_loader.load(os.getenv("KONG_CONF"))
     singletons.loaded_plugins = {
       {
+        name = "yop-auth",
+        handler = require("kong.plugins.yop-auth.handler")
+      },
+      {
         name = "yop",
         handler = require("kong.plugins.yop.handler")
       }
