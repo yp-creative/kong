@@ -76,6 +76,7 @@ step="download and install kong"
 echo "5.$step"
 cd "$YOP_NGINX_INSTALL_DIR"
 git clone https://github.com/yp-creative/kong.git && cd kong && git checkout develop && cd .. && /usr/local/bin/luarocks install kong/kong-0.8.3-0.rockspec || checkStepStatus
+mkdir -p /etc/kong && cd "$YOP_NGINX_INSTALL_DIR" && cp kong/kong-production.yml /etc/kong/kong.yml
 
 # ==================================================================
 

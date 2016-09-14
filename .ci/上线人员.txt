@@ -1,0 +1,22 @@
+1.可以新建一个目录，把setup_install.sh和setup_update.sh放到该目录下。然后sudo ./setup_install.sh完成初步安装
+（这个过程可能会很长，约10分钟，如中途有错会报错停止）
+
+2.执行更新版本命令，发布生产1.0版本（之后每次要上线更新时，都执行更新命令就好了，更新以-tag后的版本标记） sudo ./setup_update.sh -tag pro-1.0
+
+3.请确认yop.core.3g和yop.center.3g两个域名是否可用
+
+ping yop.core.3g
+ping yop.center.3g
+
+两个地址是否可用：
+
+curl -I http://yop.core.3g:8080/yop-hessian/hessian/ApiMgrFacade 返回405代表正常
+curl -I http://yop.center.3g/yop-center/rest/v2.0/auth/enterprise 返回200代表正常
+
+4./etc/kong/kong.yml第22行处，修改dns_resolver为dns服务器地址（能解析yop.core.3g和yop.center.3g两个域名的dns服务器地址）
+
+5.请查看一下ulimit -n的值，并把该值尽量调大(至少4096)
+
+6.启动sudo /usr/local/bin/kong start
+
+7.测试 curl -I http://127.0.0.1:17777/yop-center/rest/v2.0/auth/enterprise 返回200代表正常

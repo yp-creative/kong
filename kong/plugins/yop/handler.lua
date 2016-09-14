@@ -17,13 +17,17 @@ local interceptors = {
   require 'kong.plugins.yop.interceptor.default_value',
   require 'kong.plugins.yop.interceptor.request_validator',
   require 'kong.plugins.yop.interceptor.request_transformer',
-  require 'kong.plugins.yop.interceptor.load_balance'
+  require 'kong.plugins.yop.interceptor.load_balance',
+  require 'kong.plugins.yop.interceptor.yop_request_id'
 }
 local keyOrder = { "state", "result", "ts", "sign", "error" }
 
 local YopHandler = BasePlugin:extend()
 
 function YopHandler:new() end
+
+function YopHandler:init_worker()
+end
 
 function YopHandler:access()
   local ctx = { nginx = true }

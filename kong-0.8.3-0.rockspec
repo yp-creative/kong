@@ -112,9 +112,6 @@ build = {
     ["kong.plugins.rate-limiting.dao.cassandra"] = "kong/plugins/rate-limiting/dao/cassandra.lua",
     ["kong.plugins.rate-limiting.dao.postgres"] = "kong/plugins/rate-limiting/dao/postgres.lua",
 
-    ["kong.plugins.correlation-id.handler"] = "kong/plugins/correlation-id/handler.lua",
-    ["kong.plugins.correlation-id.schema"] = "kong/plugins/correlation-id/schema.lua",
-
     ["kong.plugins.syslog.handler"] = "kong/plugins/syslog/handler.lua",
     ["kong.plugins.syslog.schema"] = "kong/plugins/syslog/schema.lua",
 
@@ -132,6 +129,7 @@ build = {
     ["kong.plugins.yop.interceptor.request_validator"] = "kong/plugins/yop/interceptor/request_validator.lua",
     ["kong.plugins.yop.interceptor.whitelist"] = "kong/plugins/yop/interceptor/whitelist.lua",
     ["kong.plugins.yop.interceptor.validate_sign"] = "kong/plugins/yop/interceptor/validate_sign.lua",
+    ["kong.plugins.yop.interceptor.yop_request_id"] = "kong/plugins/yop/interceptor/yop_request_id.lua",
     ["kong.plugins.yop.handler"] = "kong/plugins/yop/handler.lua",
     ["kong.plugins.yop.schema"] = "kong/plugins/yop/schema.lua"
   },
