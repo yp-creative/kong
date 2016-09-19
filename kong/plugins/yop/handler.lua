@@ -1,13 +1,12 @@
 local BasePlugin = require "kong.plugins.base_plugin"
 
-local ipairs, ngx, table, string = ipairs, ngx, table, string
+local ipairs, ngx, table = ipairs, ngx, table
 local json = require "kong.yop.dkjson"
 local cjson = require "cjson"
-local setHeader = ngx.req.set_header
 local initializeCtx = require 'kong.plugins.yop.interceptor.initialize_ctx'
 
 local security_center = require 'kong.yop.security_center'
-local response, _ = require 'kong.yop.response'()
+local response = require 'kong.yop.response'
 
 local interceptors = {
   require 'kong.plugins.yop.interceptor.http_method',
@@ -17,8 +16,7 @@ local interceptors = {
   require 'kong.plugins.yop.interceptor.default_value',
   require 'kong.plugins.yop.interceptor.request_validator',
   require 'kong.plugins.yop.interceptor.request_transformer',
-  require 'kong.plugins.yop.interceptor.load_balance',
-  require 'kong.plugins.yop.interceptor.yop_request_id'
+  require 'kong.plugins.yop.interceptor.load_balance'
 }
 local keyOrder = { "state", "result", "ts", "sign", "error" }
 

@@ -108,6 +108,7 @@ build = {
     ["kong.plugins.syslog.schema"] = "kong/plugins/syslog/schema.lua",
 
     ["kong.yop.cache"] = "kong/yop/cache.lua",
+    ["kong.yop.log"] = "kong/yop/log.lua",
     ["kong.yop.response"] = "kong/yop/response.lua",
     ["kong.yop.dkjson"] = "kong/yop/dkjson.lua",
     ["kong.yop.security_center"] = "kong/yop/security_center.lua",
@@ -122,7 +123,6 @@ build = {
     ["kong.plugins.yop.interceptor.request_transformer"] = "kong/plugins/yop/interceptor/request_transformer.lua",
     ["kong.plugins.yop.interceptor.request_validator"] = "kong/plugins/yop/interceptor/request_validator.lua",
     ["kong.plugins.yop.interceptor.whitelist"] = "kong/plugins/yop/interceptor/whitelist.lua",
-    ["kong.plugins.yop.interceptor.yop_request_id"] = "kong/plugins/yop/interceptor/yop_request_id.lua",
     ["kong.plugins.yop.handler"] = "kong/plugins/yop/handler.lua"
   },
   install = {

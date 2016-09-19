@@ -1,5 +1,6 @@
 local responses = require "kong.tools.responses"
 local os, ngx, string, table = os, ngx, string, table
+local log = require "kong.yop.log"
 
 local ErrorCode = {
   ['99001001'] = '应用(%s)无效或不存在,请确认appKey正确且应用状态正常',
@@ -99,52 +100,68 @@ function Response.validatePatternException(p, rule) sendValidateError(p.app, "99
 
 function Response.apiNotExistException(apiUri)
   ngx.ctx.skipBodyFilter = true
+  log.warn("api doesn't exist,apiUri: ", apiUri)
   responses.send(200, Response:new():fail():errors("99001002", apiUri))
 end
 
 function Response.apiUnavailableException(apiUri)
   ngx.ctx.skipBodyFilter = true
+  log.warn("api is not available,apiUri: ", apiUri)
   responses.send(200, Response:new():fail():errors("99001003", apiUri))
 end
 
 function Response.appUnavailableException(appKey)
   ngx.ctx.skipBodyFilter = true
+  log.warn("app is not available,appKey: ", appKey)
   responses.send(200, Response:new():fail():errors("99001001", appKey))
 end
 
 function Response.missParameterException(appKey, requiredParameter)
   ngx.ctx.skipBodyFilter = true
+  log.warn("parameter is required but missing,appKey: ", appKey, ",requiredParameter: ", requiredParameter)
   responses.send(200, Response:new():fail():errors("99001006", appKey, requiredParameter))
 end
 
 function Response.notAllowdHttpMethodException(appKey, method)
   ngx.ctx.skipBodyFilter = true
+  log.warn("http method is not allowed,appKey: ", appKey, ",method: ", method)
   responses.send(200, Response:new():fail():errors("99001005", appKey, method))
 end
 
 function Response.notAllowdIpException(appKey, ip)
   ngx.ctx.skipBodyFilter = true
+  log.warn("ip is not allowed,appKey: ", appKey, ",ip: ", ip)
   responses.send(200, Response:new():fail():errors("99001021", appKey, ip))
 end
 
 function Response.permissionDeniedException(appKey)
   ngx.ctx.skipBodyFilter = true
+  log.warn("app is not allowed to access api,appKey: ", appKey)
   responses.send(200, Response:new():fail():errors("99001004", appKey))
 end
 
 function Response.signException(appKey)
   ngx.ctx.skipBodyFilter = true
+  log.warn("signature is not correct,appKey: ", appKey)
   responses.send(200, Response:new():fail():errors("99001008", appKey))
 end
 
 function Response.decryptException(appKey)
   ngx.ctx.skipBodyFilter = true
+  log.warn("exception when trying to decrypt request,appKey: ", appKey)
   responses.send(200, Response:new():fail():errors("99001009", appKey))
 end
 
 function Response.oauth2Exception(appKey, message)
   ngx.ctx.skipBodyFilter = true
+  log.warn("oauth2 exception when trying to authenticate,appKey: ", appKey, ",message: ", message)
   responses.send(200, Response:new():fail():errors("99001023", appKey, message))
 end
 
-return function() return Response, ErrorCode end
+function Response.noAvailableUpstreamsException(appKey)
+  ngx.ctx.skipBodyFilter = true
+  log.warn("there is no available upstreams,appKey: ", appKey)
+  responses.send(200, Response:new():fail():errors("99001022", appKey, "无可用的上游，请联系服务提供方"))
+end
+
+return Response

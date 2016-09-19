@@ -6,7 +6,7 @@
 -- To change this template use File | Settings | File Templates.
 --
 local decodeOnceToString = ngx.unescape_uri
-local response, _ = require 'kong.yop.response'()
+local response = require 'kong.yop.response'
 local security_center = require 'kong.yop.security_center'
 
 local stringy = require "stringy"

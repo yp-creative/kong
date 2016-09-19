@@ -7,14 +7,15 @@
 -- Time: 下午12:06
 -- To change this template use File | Settings | File Templates.
 --
-local response, _ = require 'kong.yop.response'()
+local response = require 'kong.yop.response'
 local tostring = tostring
 local _M = {}
 
 _M.process = function(ctx)
   --  level==0的api不受权限控制
   if ctx.api.apiLevel == 0 then return end
-  if not ctx.authorization[tostring(ctx.api.id)] then response.permissionDeniedException(ctx.appKey) end
+  local authorization = ctx.authorization
+  if authorization == nil or (not authorization[tostring(ctx.api.id)]) then response.permissionDeniedException(ctx.appKey) end
 end
 
 return _M

@@ -8,12 +8,23 @@
 local json = require "cjson"
 local dyups = require "ngx.dyups"
 local singletons = require "kong.singletons"
+local log = require "kong.yop.log"
 local cache = ngx.shared.yop
 local stringy = require "stringy"
 local ngx, table, pairs, ipairs, next, tostring, string = ngx, table, pairs, ipairs, next, tostring, string
 local resty_lock = require "resty.lock"
 local http = require "resty.http"
 local uriEncode = ngx.encode_args
+
+local CACHE_LOCK_OPTION = {
+  exptime = 10,
+  timeout = 5
+}
+
+local POST_HEADER_OPTIONS = {
+  ['accept'] = "application/json",
+  ["Content-Type"] = "application/x-www-form-urlencoded"
+}
 
 
 local url, expireTime = singletons.configuration["yop_hessian_url"], singletons.configuration["yop_cache_expired_seconds"]
@@ -57,14 +68,11 @@ function _M.get_or_set(original_key, key, cb)
   local value = _M.get(key)
   if value then return value end
 
-  local lock, err = resty_lock:new("cache_locks", {
-    exptime = 10,
-    timeout = 5
-  })
-  if not lock then ngx.log(ngx.ERR, "could not create lock: ", err) return end
+  local lock, err = resty_lock:new("cache_locks", CACHE_LOCK_OPTION)
+  if not lock then log.error("could not create lock: ", err) return end
 
   local elapsed, err = lock:lock(key)
-  if not elapsed then ngx.log(ngx.ERR, "failed to acquire cache lock: ", err) end
+  if not elapsed then log.error("failed to acquire cache lock: ", err) end
 
   value = _M.get(key)
 
@@ -73,12 +81,12 @@ function _M.get_or_set(original_key, key, cb)
     value = cb(original_key)
     if value then
       local ok, err = _M.set(key, value)
-      if not ok then ngx.log(ngx.ERR, err) end
+      if not ok then log.error(err) end
     end
   end
 
   local ok, err = lock:unlock()
-  if not ok and err then ngx.log(ngx.ERR, "failed to unlock: ", err) end
+  if not ok and err then log.error("failed to unlock: ", err) end
   return value
 end
 
@@ -87,19 +95,18 @@ local function post(path, param)
   local res, err = httpc:request_uri(url .. "/" .. path, {
     method = "POST",
     body = uriEncode(param),
-    headers = {
-      ['accept'] = "application/json",
-      ["Content-Type"] = "application/x-www-form-urlencoded"
-    }
+    POST_HEADER_OPTIONS
   })
-  if not res then ngx.log(ngx.NOTICE, "failed to request: ", err) return {} end
+  --  如果未能远程请求成功，此处需返回nil，以便下次请求还能继续远程请求
+  if not res then log.notice("failed to request: ", err) return nil end
   return json.decode(res.body)
 end
 
 function _M.cacheApi(api)
   return _M.get_or_set(api, CACHE_KEYS.API .. api, function(api)
-    ngx.log(ngx.NOTICE, "remote get api info...api:" .. api)
+    log.notice("remote get api info,apiUri: " .. api)
     local o = post("api", { apiUri = api })
+    if o == nil then return nil end
     if not next(o) then return {} end
 
     --  api basic info
@@ -148,8 +155,9 @@ function _M.getIgnoreSignFields(api) return _M.get(CACHE_KEYS.IGNORE_SIGN_FIELDS
 
 function _M.cacheIPWhitelist(api)
   return _M.get_or_set(api, CACHE_KEYS.WHITELIST .. api, function(api)
-    ngx.log(ngx.NOTICE, "remote get api whitelist info...api:" .. api)
+    log.notice("remote get api whitelist info,apiUri: " .. api)
     local o = post("limit", { apiUri = api })
+    if o == nil then return nil end
     if not next(o) then return {} end
     local whitelist = {}
     for _, value in pairs(o) do
@@ -164,7 +172,7 @@ end
 
 function _M.cacheApp(app)
   return _M.get_or_set(app, CACHE_KEYS.APP .. app, function(appKey)
-    ngx.log(ngx.NOTICE, "remote get app info...appKey:" .. appKey)
+    log.notice("remote get app info,appKey: " .. appKey)
     return post("app", { appKey = appKey })
   end)
 end
@@ -172,8 +180,9 @@ end
 
 function _M.cacheAppAuth(appKey)
   return _M.get_or_set(appKey, CACHE_KEYS.APP_AUTH .. appKey, function(appKey)
-    ngx.log(ngx.NOTICE, "remote get app authorization info...appKey:" .. appKey)
+    log.notice("remote get app authorization info,appKey: " .. appKey)
     local o = post("auth", { appKey = appKey })
+    if o == nil then return nil end
     if not next(o) then return {} end
 
     local authorization = {}
@@ -185,15 +194,16 @@ end
 
 function _M.cacheUpstream(backendApp)
   return _M.get_or_set(backendApp, CACHE_KEYS.UPSTREAM .. backendApp, function(backendApp)
-    ngx.log(ngx.NOTICE, "remote get backend app info...backendApp:" .. backendApp)
+    log.notice("remote get backend app info,backendApp: " .. backendApp)
     local o = post("upstream", { backendApp = backendApp })
+    if o == nil then return nil end
     if not next(o) then return {} end
     for _, value in ipairs(o) do
       local name = value.name
       local servers = "server " .. table.concat(value.servers, ";\nserver ") .. ";"
-      ngx.log(ngx.NOTICE, string.format('dyups.update(%s, "%s")', name, servers))
+      log.notice(string.format('dyups.update(%s, "%s")', name, servers))
       local status, rv = dyups.update(name, servers)
-      if status ~= 200 then ngx.log(ngx.ALERT, string.format('dyups.update(%s, "%s") failed: %s', name, servers, tostring(rv))) return nil end
+      if status ~= 200 then log.warn(string.format('dyups.update(%s, "%s") failed: %s', name, servers, tostring(rv))) return nil end
     end
     return o
   end)

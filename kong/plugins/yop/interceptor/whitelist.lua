@@ -6,7 +6,7 @@
 -- Time: 下午12:04
 -- To change this template use File | Settings | File Templates.
 --
-local response, _ = require 'kong.yop.response'()
+local response = require 'kong.yop.response'
 local next = next
 
 local _M = {}

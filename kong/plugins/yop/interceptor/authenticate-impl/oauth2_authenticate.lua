@@ -6,7 +6,7 @@
 -- To change this template use File | Settings | File Templates.
 --
 local ngx = ngx
-local response, _ = require 'kong.yop.response'()
+local response = require 'kong.yop.response'
 
 local stringy = require "stringy"
 local json = require "cjson"

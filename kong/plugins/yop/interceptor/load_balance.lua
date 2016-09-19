@@ -6,7 +6,8 @@
 -- Time: 下午12:04
 -- To change this template use File | Settings | File Templates.
 --
-local ngx, ipairs, math, table = ngx, ipairs, math, table
+local ngx, ipairs, math, table, next = ngx, ipairs, math, table, next
+local response = require 'kong.yop.response'
 local _M = {}
 
 local route = {
@@ -22,10 +23,11 @@ local function buildUpstream(upstream, api)
 end
 
 _M.process = function(ctx)
+  local upstreams = ctx.upstreams
+  if upstreams == nil or not next(upstreams) then response.noAvailableUpstreamsException(ctx.appKey) end
   local api = ctx.api
   for _, upstream in ipairs(ctx.upstreams) do
     if upstream.immutable then buildUpstream(upstream, api) return end
-
     local rule = upstream.routeRule
     if route[rule.ruleType](rule, ctx) then buildUpstream(upstream, api) return end
   end

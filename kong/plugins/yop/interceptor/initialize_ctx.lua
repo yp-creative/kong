@@ -8,14 +8,18 @@
 --
 local readRequestBody = ngx.req.read_body
 local getRequestBody = ngx.req.get_body_data
+local setHeader = ngx.req.set_header
+local getHeaders = ngx.req.get_headers
 local ngxDecodeArgs = ngx.decode_args
 
 local getRequestMethod = ngx.req.get_method
 
 local cache = require 'kong.yop.cache'
-local response, _ = require 'kong.yop.response'()
+local log = require "kong.yop.log"
+local response = require 'kong.yop.response'
 local singletons = require "kong.singletons"
 local stringy = require "stringy"
+local generateUUID = require "lua_uuid"
 
 local next = next
 local ngx = ngx
@@ -24,6 +28,8 @@ local decodeOnceToString = ngx.unescape_uri
 
 local _M = {}
 
+local UUID_HEADER = "X-YOP-Request-ID"
+local STRIKE = "-"
 local PREFIX_LENGTH = 1 + #"/yop-center"
 local YOP_CENTER_URL = singletons.configuration["yop_center_url"]
 if stringy.endswith(YOP_CENTER_URL, "/") then YOP_CENTER_URL = YOP_CENTER_URL:sub(1, #YOP_CENTER_URL - 1) end
@@ -36,7 +42,13 @@ local getOriginalParameters = {
 }
 
 _M.process = function(ctx)
+  --  如果不存在uuid，生成一个uuid并设置header，日志打印通过uuid关联流程
+  local uuid = getHeaders()[UUID_HEADER]
+  if not uuid then uuid = generateUUID():gsub(STRIKE, "") setHeader(UUID_HEADER, uuid) end
+  ngx.ctx.uuid, ctx.uuid = uuid, uuid
+
   local apiUri = ngxVar.uri:sub(PREFIX_LENGTH)
+  log.notice_u(uuid, "start to process api request,apiUri: ", apiUri)
 
   --  从缓存中获取api信息，如果不存在，就调用远程接口获取api信息并缓存
   local api = cache.cacheApi(apiUri)
@@ -46,8 +58,13 @@ _M.process = function(ctx)
   if api.status ~= 'ACTIVE' then response.apiUnavailableException(apiUri) end
 
   --  如果是未迁移api，直接转发至yop-center
-  if api.fork == "YOP_CENTER" then ctx.nginx, ngx.ctx.skipBodyFilter, ngx.ctx.upstream_url = false, true, YOP_CENTER_URL .. apiUri return end
+  if api.fork == "YOP_CENTER" then
+    log.notice(uuid, "fork to yop-center")
+    ctx.nginx, ngx.ctx.skipBodyFilter, ngx.ctx.upstream_url = false, true, YOP_CENTER_URL .. apiUri
+    return
+  end
 
+  log.notice(uuid, "fork to nginx")
   local method = getRequestMethod()
 
   --  parameters需要做2次urldecode
