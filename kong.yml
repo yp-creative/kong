@@ -13,16 +13,18 @@
 # nginx_working_dir: /usr/local/kong/
 
 ## yop-hessian的地址，默认http://yop.core.3g:8080/yop-hessian
-yop_hessian_url: "http://172.17.102.173:8055/yop-hessian"
+yop_hessian_url: "http://172.17.102.173:8077/yop-hessian"
 
 ## yop-center，默认http://yop.center.3g/yop-center
 yop_center_url: "http://172.17.102.173:8064/yop-center"
+
+oauth2_server_url: "http://172.17.102.173:8054/yop-oauth2-api/"
 
 ## dns服务器，主要用于解析上面两个域名：yop_hessian_url和yop_center_url
 dns_resolver: "172.17.102.171"
 
 ## yop nginx本地缓存失效时间（秒），默认5分钟（300秒）
-yop_cache_expired_seconds: 10
+yop_cache_expired_seconds: 1000
 
 ######
 ## Address and port on which the server will accept HTTP requests, consumers will make requests on this port.
@@ -191,7 +193,7 @@ nginx: |
         proxy_set_header Host $upstream_host;
         proxy_pass $upstream_url;
         proxy_pass_header Server;
-        chunked_transfer_encoding off;
+        chunked_transfer_encoding on;
 
         # Add additional response headers
         header_filter_by_lua_block {

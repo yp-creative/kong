@@ -24,6 +24,7 @@ local ErrorCode = {
   ['99001020'] = '应用(%s)报文加解密异常',
   ['99001021'] = '应用(%s)非白名单IP，当前IP:%s',
   ['99001022'] = '应用(%s)调用业务系统异常:%s',
+  ['99001023'] = '应用(%s)进行OAUTH2认证时异常:%s',
   ['99999000'] = '应用(%s)系统异常，请稍后重试',
   ['99100001'] = '参数%s不允许为NULL',
   ['99100002'] = '参数%s不允许为空',
@@ -139,6 +140,11 @@ end
 function Response.decryptException(appKey)
   ngx.ctx.skipBodyFilter = true
   responses.send(200, Response:new():fail():errors("99001009", appKey))
+end
+
+function Response.oauth2Exception(appKey, message)
+  ngx.ctx.skipBodyFilter = true
+  responses.send(200, Response:new():fail():errors("99001023", appKey, message))
 end
 
 return function() return Response, ErrorCode end

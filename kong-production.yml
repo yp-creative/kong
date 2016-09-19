@@ -18,6 +18,8 @@ yop_hessian_url: "http://yop.core.3g:8080/yop-hessian"
 ## yop-center，默认http://yop.center.3g/yop-center
 yop_center_url: "http://yop.center.3g/yop-center"
 
+oauth2_server_url: ""
+
 ## dns服务器，主要用于解析上面两个域名：yop_hessian_url和yop_center_url
 dns_resolver: "172.17.102.171"
 

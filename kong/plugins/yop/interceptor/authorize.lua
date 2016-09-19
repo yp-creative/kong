@@ -14,7 +14,7 @@ local _M = {}
 _M.process = function(ctx)
   --  level==0的api不受权限控制
   if ctx.api.apiLevel == 0 then return end
-  if not ctx.auth[tostring(ctx.api.id)] then response.permissionDeniedException(ctx.appKey) end
+  if not ctx.authorization[tostring(ctx.api.id)] then response.permissionDeniedException(ctx.appKey) end
 end
 
 return _M

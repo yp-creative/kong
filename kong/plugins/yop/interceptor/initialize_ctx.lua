@@ -6,6 +6,8 @@
 -- Time: 下午12:18
 -- To change this template use File | Settings | File Templates.
 --
+local readRequestBody = ngx.req.read_body
+local getRequestBody = ngx.req.get_body_data
 local ngxDecodeArgs = ngx.decode_args
 
 local getRequestMethod = ngx.req.get_method
@@ -18,6 +20,7 @@ local stringy = require "stringy"
 local next = next
 local ngx = ngx
 local ngxVar = ngx.var
+local decodeOnceToString = ngx.unescape_uri
 
 local _M = {}
 
@@ -27,6 +30,10 @@ if stringy.endswith(YOP_CENTER_URL, "/") then YOP_CENTER_URL = YOP_CENTER_URL:su
 
 local function decodeOnceToTable(body) if body then return ngxDecodeArgs(body) end return {} end
 
+local getOriginalParameters = {
+  GET = function() return ngxVar.args end,
+  POST = function() readRequestBody() return getRequestBody() end
+}
 
 _M.process = function(ctx)
   local apiUri = ngxVar.uri:sub(PREFIX_LENGTH)
@@ -43,14 +50,14 @@ _M.process = function(ctx)
 
   local method = getRequestMethod()
 
-  --请求参数
-  ctx.parameters = ngx.ctx.parameters
+  --  parameters需要做2次urldecode
+  local parameters = decodeOnceToTable(decodeOnceToString(getOriginalParameters[method]()))
 
   local appKey
-  if ctx.parameters.appKey then
-    appKey, ctx.keyStoreType = ctx.parameters.appKey, 'DB_BASED'
+  if parameters.appKey then
+    appKey, ctx.keyStoreType = parameters.appKey, 'DB_BASED'
   else
-    appKey, ctx.keyStoreType = ctx.parameters.customerNo, "CUST_BASED"
+    appKey, ctx.keyStoreType = parameters.customerNo, "CUST_BASED"
   end
   --  缺少appKey参数
   if appKey == nil then response.missParameterException("", "appKey") end
@@ -67,7 +74,8 @@ _M.process = function(ctx)
   ctx.api, ctx.app = api, app
   --http请求方法，GET/POST
   ctx.method = method
-
+  --请求参数
+  ctx.parameters = parameters
   --请求ip
   ctx.ip = ngxVar.remote_addr
 
@@ -83,11 +91,10 @@ _M.process = function(ctx)
   --  ip白名单
   ctx.whitelist = cache.cacheIPWhitelist(apiUri)
   --  授权信息
-  ctx.auth = cache.cacheAppAuth(appKey)
+  ctx.authorization = cache.cacheAppAuth(appKey)
 
   --负载均衡信息
   ctx.upstreams = cache.cacheUpstream(api.backendApp)
-
 end
 
 return _M

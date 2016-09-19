@@ -2,6 +2,7 @@ return {
   ["nginx_working_dir"] = { type = "string", default = "/usr/local/kong" },
   ["yop_hessian_url"] = { type = "string", default = "http://yop.core.3g:8080/yop-hessian" },
   ["yop_center_url"] = { type = "string", default = "http://yop.center.3g/yop-center" },
+  ["oauth2_server_url"] = { type = "string", default = "http://yop.center.3g/yop-center" },
   ["dns_resolver"] = { type = "string", default = "8.8.8.8" },
   ["yop_cache_expired_seconds"] = { type = "number", default = 300 },
   ["proxy_listen"] = { type = "string", default = "0.0.0.0:8000" },

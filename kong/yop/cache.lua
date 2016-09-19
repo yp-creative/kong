@@ -172,13 +172,13 @@ end
 
 function _M.cacheAppAuth(appKey)
   return _M.get_or_set(appKey, CACHE_KEYS.APP_AUTH .. appKey, function(appKey)
-    ngx.log(ngx.NOTICE, "remote get app auth info...appKey:" .. appKey)
+    ngx.log(ngx.NOTICE, "remote get app authorization info...appKey:" .. appKey)
     local o = post("auth", { appKey = appKey })
     if not next(o) then return {} end
 
-    local auth = {}
-    for _, value in pairs(o) do auth[tostring(value.apiId)] = true end
-    return auth
+    local authorization = {}
+    for _, value in pairs(o) do authorization[tostring(value.apiId)] = true end
+    return authorization
   end)
 end
 
