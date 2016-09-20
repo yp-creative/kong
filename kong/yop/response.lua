@@ -1,6 +1,7 @@
 local responses = require "kong.tools.responses"
-local os, ngx, string, table = os, ngx, string, table
+local ngx, string, table = ngx, string, table
 local log = require "kong.yop.log"
+local now = ngx.now
 
 local ErrorCode = {
   ['99001001'] = '应用(%s)无效或不存在,请确认appKey正确且应用状态正常',
@@ -56,7 +57,7 @@ function Response:new()
   local o = {}
   setmetatable(o, self)
   self.__index = self
-  o.ts = os.time() * 1000
+  o.ts = now() * 1000
   o.state = "SUCCESS"
   return o
 end
@@ -67,9 +68,9 @@ function Response:fail() self.state = "FAILURE" return self end
 
 function Response:formats(format) self.format = format return self end
 
-function Response:errors(code, p1, p2, p3) self.error = { code = code, message = string.format(ErrorCode[code], p1, p2, p3) } return self end
+function Response:errors(code, p1, p2, p3) self.error = { code = code, message = string.format(ErrorCode[code], p1, p2, p3), solution = ngx.ctx.uuid } return self end
 
-function Response:requestValidatorError(appKey) self.error = { code = '99001007', message = string.format(ErrorCode['99001007'], appKey), subErrors = {} } return self end
+function Response:requestValidatorError(appKey) self.error = { code = '99001007', message = string.format(ErrorCode['99001007'], appKey), subErrors = {}, solution = ngx.ctx.uuid } return self end
 
 function Response:appendSubError(code, a, b) table.insert(self.error.subErrors, { code = code, message = string.format(ErrorCode[code], a, b) }) return self end
 

@@ -21,6 +21,7 @@ local url = { "http://", "upstream", "/", "backendApp", "/soa/rest/", "className
 local function buildUpstream(upstream, api)
   url[2], url[4], url[6], url[8] = upstream.name, api.backendApp, api.bareClass, api.bareMethod
   ngx.ctx.upstream_url = table.concat(url)
+  log.notice("use upstream: ", upstream.name)
 end
 
 _M.process = function(ctx)
@@ -28,17 +29,9 @@ _M.process = function(ctx)
   if upstreams == nil or not next(upstreams) then response.noAvailableUpstreamsException(ctx.appKey) end
   local api = ctx.api
   for _, upstream in ipairs(ctx.upstreams) do
-    if upstream.immutable then
-      buildUpstream(upstream, api)
-      log.notice("use default upstream: ", upstream.name)
-      return
-    end
+    if upstream.immutable then buildUpstream(upstream, api) return end
     local rule = upstream.routeRule
-    if route[rule.ruleType](rule, ctx) then
-      buildUpstream(upstream, api)
-      log.notice("use custom upstream: ", upstream.name)
-      return
-    end
+    if route[rule.ruleType](rule, ctx) then buildUpstream(upstream, api) return end
   end
 end
 

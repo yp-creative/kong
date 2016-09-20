@@ -59,15 +59,17 @@ _M.process = function(ctx)
 
   --  如果是未迁移api，直接转发至yop-center
   if api.fork == "YOP_CENTER" then
-    log.notice(uuid, "fork to yop-center")
+    log.notice_u(uuid, "fork to yop-center")
     ctx.nginx, ngx.ctx.skipBodyFilter, ngx.ctx.upstream_url = false, true, YOP_CENTER_URL .. apiUri
     return
   end
 
-  log.notice(uuid, "fork to nginx")
+  log.notice_u(uuid, "fork to nginx")
+
   local method = getRequestMethod()
 
   --  parameters需要做2次urldecode
+  -- 注意：这一步由于ngx.req.read_body（同步非阻塞）的使用可能会导致交出进程使用权
   local parameters = decodeOnceToTable(decodeOnceToString(getOriginalParameters[method]()))
 
   local appKey

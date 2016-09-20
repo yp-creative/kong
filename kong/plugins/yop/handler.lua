@@ -7,6 +7,7 @@ local initializeCtx = require 'kong.plugins.yop.interceptor.initialize_ctx'
 
 local security_center = require 'kong.yop.security_center'
 local response = require 'kong.yop.response'
+local log = require 'kong.yop.log'
 
 local interceptors = {
   require 'kong.plugins.yop.interceptor.http_method',
@@ -35,13 +36,12 @@ function YopHandler:access()
   for _, interceptor in ipairs(interceptors) do interceptor.process(ctx) end
 end
 
-function BasePlugin:header_filter()
-  ngx.header.content_length = nil
-end
+function BasePlugin:header_filter() ngx.header.content_length = nil end
 
 function YopHandler:body_filter()
+  local uuid = ngx.ctx.uuid
   --  异常情况，主动跳过后续的加密签名处理
-  if ngx.ctx.skipBodyFilter then return end
+  if ngx.ctx.skipBodyFilter then log.notice_u(uuid, "skip body filter") return end
 
   -- ngx.arg[2] false 意味着,body没有接收完.
   -- When setting nil or an empty Lua string value to ngx.arg[1], no data chunk will be passed to the downstream Nginx output filters at all.
@@ -54,18 +54,15 @@ function YopHandler:body_filter()
   local r = response:new()
   if body.status ~= "SUCCESS" then
     r:fail()
-    r.error = { code = body.exception.code, message = body.exception.errMsg }
-    if appSecret then
-      r.sign = security_center.sign(signAlg, table.concat({ appSecret, r.state, r.ts, appSecret }))
-    end
+    r.error = { code = body.exception.code, message = body.exception.errMsg, solution = uuid }
+    log.notice_u(uuid, "invoke restful api exception,code: ", body.exception.code, ",message: ", body.exception.errMsg)
+    if appSecret then r.sign = security_center.sign(signAlg, table.concat({ appSecret, r.state, r.ts, appSecret })) end
   else
     r.result = body.result -- 用作加密,签名
     if appSecret and ngx.ctx.encrypt and r.result ~= cjson.null then
       r.result = security_center.encryptResponse(ngx.ctx.keyStoreType, r.result, appSecret)
     end
-    if appSecret then
-      r.sign = security_center.sign(signAlg, table.concat({ appSecret, r.state, r.result, r.ts, appSecret }))
-    end
+    if appSecret then r.sign = security_center.sign(signAlg, table.concat({ appSecret, r.state, r.result, r.ts, appSecret })) end
   end
   ngx.arg[1] = json.encode(r, { indent = true, keyOrder = keyOrder });
 end

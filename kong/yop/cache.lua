@@ -29,6 +29,7 @@ local POST_HEADER_OPTIONS = {
 
 local url, expireTime = singletons.configuration["yop_hessian_url"], singletons.configuration["yop_cache_expired_seconds"]
 if stringy.endswith(url, "/") then url = url:sub(1, #url - 1) end
+log.notice_u("init", "use yop_hessian_url: ", url)
 
 local CACHE_KEYS = {
   API = "api:",
@@ -59,10 +60,7 @@ end
 
 function _M.delete(key) cache:delete(key) end
 
-function _M.delete_all()
-  cache:flush_all() -- This does not free up the memory, only marks the items as expired
-  cache:flush_expired() -- This does actually remove the elements from the memory
-end
+function _M.delete_all() cache:flush_all() cache:flush_expired() end
 
 function _M.get_or_set(original_key, key, cb)
   local value = _M.get(key)
@@ -95,7 +93,7 @@ local function post(path, param)
   local res, err = httpc:request_uri(url .. "/" .. path, {
     method = "POST",
     body = uriEncode(param),
-    POST_HEADER_OPTIONS
+    headers = POST_HEADER_OPTIONS
   })
   --  如果未能远程请求成功，此处需返回nil，以便下次请求还能继续远程请求
   if not res then log.notice("failed to request: ", err) return nil end
