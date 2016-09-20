@@ -7,6 +7,7 @@
 -- To change this template use File | Settings | File Templates.
 --
 local ngx, ipairs, math, table, next = ngx, ipairs, math, table, next
+local log = require 'kong.yop.log'
 local response = require 'kong.yop.response'
 local _M = {}
 
@@ -27,9 +28,17 @@ _M.process = function(ctx)
   if upstreams == nil or not next(upstreams) then response.noAvailableUpstreamsException(ctx.appKey) end
   local api = ctx.api
   for _, upstream in ipairs(ctx.upstreams) do
-    if upstream.immutable then buildUpstream(upstream, api) return end
+    if upstream.immutable then
+      buildUpstream(upstream, api)
+      log.notice("use default upstream: ", upstream.name)
+      return
+    end
     local rule = upstream.routeRule
-    if route[rule.ruleType](rule, ctx) then buildUpstream(upstream, api) return end
+    if route[rule.ruleType](rule, ctx) then
+      buildUpstream(upstream, api)
+      log.notice("use custom upstream: ", upstream.name)
+      return
+    end
   end
 end
 

@@ -17,6 +17,11 @@ local uriEncode = ngx.encode_args
 
 local _M = {}
 
+local POST_HEADER_OPTIONS = {
+  ['accept'] = "application/json",
+  ["Content-Type"] = "application/x-www-form-urlencoded"
+}
+
 local OAUTH2_SERVER_URL = singletons.configuration["oauth2_server_url"]
 if stringy.endswith(OAUTH2_SERVER_URL, "/") then OAUTH2_SERVER_URL = OAUTH2_SERVER_URL:sub(1, #OAUTH2_SERVER_URL - 1) end
 
@@ -26,10 +31,7 @@ _M.process = function(ctx, token)
   local res, err = httpc:request_uri(OAUTH2_SERVER_URL .. "/oauth/check_token", {
     method = "POST",
     body = uriEncode({ token = token }),
-    headers = {
-      ['accept'] = "application/json",
-      ["Content-Type"] = "application/x-www-form-urlencoded"
-    }
+    headers = POST_HEADER_OPTIONS
   })
   if not res then ngx.log(ngx.NOTICE, "failed to request oauth2 server..: ", err) response.oauth2Exception(appKey, err) end
   local body = json.decode(res.body)
