@@ -67,10 +67,10 @@ function _M.get_or_set(original_key, key, cb)
   if value then return value end
 
   local lock, err = resty_lock:new("cache_locks", CACHE_LOCK_OPTION)
-  if not lock then log.error("could not create lock: ", err) return end
+  if not lock then log.error("could not create lock: ", err) return _M.get(key) end
 
   local elapsed, err = lock:lock(key)
-  if not elapsed then log.error("failed to acquire cache lock: ", err) end
+  if not elapsed then log.error("failed to acquire cache lock: ", err) return _M.get(key) end
 
   value = _M.get(key)
 
