@@ -8,8 +8,7 @@
 --
 local readRequestBody = ngx.req.read_body
 local getRequestBody = ngx.req.get_body_data
-local setHeader = ngx.req.set_header
-local getHeaders = ngx.req.get_headers
+local getHeaders, setHeader = ngx.req.get_headers, ngx.req.set_header
 local ngxDecodeArgs = ngx.decode_args
 
 local getRequestMethod = ngx.req.get_method
@@ -33,6 +32,7 @@ local STRIKE = "-"
 local PREFIX_LENGTH = 1 + #"/yop-center"
 local YOP_CENTER_URL = singletons.configuration["yop_center_url"]
 if stringy.endswith(YOP_CENTER_URL, "/") then YOP_CENTER_URL = YOP_CENTER_URL:sub(1, #YOP_CENTER_URL - 1) end
+log.notice_u("init", "use yop_center_url: ", YOP_CENTER_URL)
 
 local function decodeOnceToTable(body) if body then return ngxDecodeArgs(body) end return {} end
 

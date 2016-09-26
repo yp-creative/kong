@@ -18,20 +18,24 @@ local route = {
 
 local url = { "http://", "upstream", "/", "backendApp", "/soa/rest/", "className", "/", "methodName" }
 
-local function buildUpstream(upstream, api)
-  url[2], url[4], url[6], url[8] = upstream.name, api.backendApp, api.bareClass, api.bareMethod
+local function buildUpstream(uuid, upstream, api)
+  url[2], url[4], url[6], url[8] = upstream, api.backendApp, api.bareClass, api.bareMethod
   ngx.ctx.upstream_url = table.concat(url)
-  log.notice("use upstream: ", upstream.name)
+  log.notice_u(uuid, "use upstream url: ", upstream)
 end
 
 _M.process = function(ctx)
+  local api = ctx.api
+  local endServiceUrl = api.endServiceUrl
+  --  指定了endServiceUrl
+  if endServiceUrl then buildUpstream(ctx.uuid, endServiceUrl, api) return end
+  --  未指定endServiceUrl
   local upstreams = ctx.upstreams
   if upstreams == nil or not next(upstreams) then response.noAvailableUpstreamsException(ctx.appKey) end
-  local api = ctx.api
   for _, upstream in ipairs(ctx.upstreams) do
-    if upstream.immutable then buildUpstream(upstream, api) return end
+    if upstream.immutable then buildUpstream(ctx.uuid, upstream.name, api) return end
     local rule = upstream.routeRule
-    if route[rule.ruleType](rule, ctx) then buildUpstream(upstream, api) return end
+    if route[rule.ruleType](rule, ctx) then buildUpstream(ctx.uuid, upstream.name, api) return end
   end
 end
 

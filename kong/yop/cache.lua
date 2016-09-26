@@ -120,6 +120,14 @@ function _M.cacheApi(api)
     endMethod = endMethod:gsub("void ", "")
     basic.bareMethod = stringy.strip(endMethod)
 
+    local endServiceUrl = basic.endServiceUrl
+    if endServiceUrl then
+      i = endServiceUrl:find("//")
+      if i then endServiceUrl = endServiceUrl:sub(i + 2) end
+      i = endServiceUrl:find("/")
+      if i then basic.endServiceUrl = endServiceUrl:sub(1, i - 1) end
+    end
+
     local params = o.params
     local transformer, defaultValues, ignoreSignFields = {}, {}, { sign = true, encrypt = true }
     for _, value in pairs(params) do
