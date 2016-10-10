@@ -21,18 +21,19 @@ yop_center_url: "http://yop.center.3g/yop-center"
 oauth2_server_url: ""
 
 ## dns服务器，主要用于解析上面两个域名：yop_hessian_url和yop_center_url
-dns_resolver: "172.17.102.171"
+# dns_resolver: "172.17.102.171"
+dns_resolver: "10.151.30.200"
 
 ## yop nginx本地缓存失效时间（秒），默认5分钟（300秒）
 yop_cache_expired_seconds: 300
 
 ######
 ## Address and port on which the server will accept HTTP requests, consumers will make requests on this port.
-proxy_listen: "0.0.0.0:17777"
+proxy_listen: "0.0.0.0:8000"
 
 ######
 ## Same as proxy_listen, but for HTTPS requests.
-# proxy_listen_ssl: "0.0.0.0:8443"
+proxy_listen_ssl: "0.0.0.0:8443"
 
 ######
 ## Address and port on which the admin API will listen to. The admin API is a private API which lets you
