@@ -18,10 +18,9 @@ yop_hessian_url: "http://yop.core.3g:8080/yop-hessian"
 ## yop-center，默认http://yop.center.3g/yop-center
 yop_center_url: "http://yop.center.3g/yop-center"
 
-oauth2_server_url: ""
+oauth2_server_url: "http://yop.center.3g/yop-oauth2-api/"
 
 ## dns服务器，主要用于解析上面两个域名：yop_hessian_url和yop_center_url
-# dns_resolver: "172.17.102.171"
 dns_resolver: "10.151.30.200"
 
 ## yop nginx本地缓存失效时间（秒），默认5分钟（300秒）
@@ -38,7 +37,7 @@ proxy_listen_ssl: "0.0.0.0:8443"
 ######
 ## Address and port on which the admin API will listen to. The admin API is a private API which lets you
 ## manage your Kong infrastructure. It needs to be secured appropriately.
-admin_api_listen: "0.0.0.0:17778"
+admin_api_listen: "0.0.0.0:8001"
 
 ######
 ## Address and port used by the node to communicate with other Kong nodes in the cluster with both UDP and
@@ -99,7 +98,7 @@ nginx: |
   {{user}}
   worker_processes auto;
   error_log logs/error.log notice;
-  daemon on;
+  daemon off;
 
   worker_rlimit_nofile {{auto_worker_rlimit_nofile}};
 
